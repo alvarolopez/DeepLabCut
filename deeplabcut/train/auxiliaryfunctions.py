@@ -5,16 +5,21 @@ A Mathis, alexander.mathis@bethgelab.org
 M Mathis, mackenzie@post.harvard.edu
 
 """
+import errno
 import os
+import os.path
 import pickle
 import pandas as pd
 
 
 def attempttomakefolder(foldername):
-    if os.path.isdir(foldername):
-        print("Folder already exists!")
-    else:
-        os.mkdir(foldername)
+    try:
+        os.makedirs(foldername)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(foldername):
+            print("Folder already exists!")
+        else:
+            raise
 
 
 def SaveData(PredicteData, metadata, dataname, pdindex, imagenames):

@@ -1,5 +1,66 @@
 # coding: utf-8
 
+from oslo_config import cfg
+
+CONF = cfg.CONF
+
+data_opts = [
+        cfg.StrOpt(
+            "task",
+            default="reaching",
+            help="Task that is being performed in the video."
+        ),
+        cfg.StrOpt(
+            "base-directory",
+            default="data",
+            help="Base directory for data."
+        ),
+        cfg.StrOpt(
+            "video-file",
+            default="reachingvideo1.avi",
+            help="Video to extract frames from."
+        ),
+        cfg.BoolOpt(
+            "cropping",
+            default=True,
+        ),
+        cfg.IntOpt(
+            "x1",
+            default=0,
+            help=("ROI dimensions / bounding box (only used if cropping == True)"
+                  "x1,y1 indicates the top left corner and"
+                  "x2,y2 is the lower right corner of the croped region.")
+        ),
+        cfg.IntOpt(
+            "x2",
+            default=640,
+            help=("ROI dimensions / bounding box (only used if cropping == True)"
+                  "x1,y1 indicates the top left corner and"
+                  "x2,y2 is the lower right corner of the croped region.")
+        ),
+        cfg.IntOpt(
+            "y1",
+            default=277,
+            help=("ROI dimensions / bounding box (only used if cropping == True)"
+                  "x1,y1 indicates the top left corner and"
+                  "x2,y2 is the lower right corner of the croped region.")
+        ),
+        cfg.IntOpt(
+            "y2",
+            default=624,
+            help=("ROI dimensions / bounding box (only used if cropping == True)"
+                  "x1,y1 indicates the top left corner and"
+                  "x2,y2 is the lower right corner of the croped region.")
+        ),
+        cfg.IntOpt(
+            "portion",
+            default=1,
+            help=("Portion of the video to sample from in step 1. Set to 1 by default.")
+        ),
+]
+
+CONF.register_cli_opts(data_opts, group="data")
+
 #####################################################################################
 # This configuration file sets various parameters for generation of training
 # set & evalutation of DeepLabCut
@@ -11,28 +72,28 @@
 # Step 1: Selecting Frames from videos
 ########################################
 
-Task = 'reaching'
+#Task = 'reaching'
 
 # Filename and path to behavioral video:
-vidpath = '.'
-filename = 'reachingvideo1.avi'
+#vidpath = '.'
+#filename = 'reachingvideo1.avi'
 
-cropping = True
+#cropping = True
 
 # ROI dimensions / bounding box (only used if cropping == True)
 # x1,y1 indicates the top left corner and
 # x2,y2 is the lower right corner of the croped region.
 
-x1 = 0
-x2 = 640
-y1 = 277
-y2 = 624
+#x1 = 0
+#x2 = 640
+#y1 = 277
+#y2 = 624
 
 # Portion of the video to sample from in step 1. Set to 1 by default.
-portion = 1
+#portion = 1
 
 ########################################
-# Step 2: Converting frames to pandas array 
+# Step 2: Converting frames to pandas array
 ########################################
 
 bodyparts = ["hand", "Finger1", "Finger2","Joystick"]  # Exact sequence of labels as were put by
@@ -42,17 +103,17 @@ Scorers = ['Mackenzie']  # who is labeling?
 # Set this true if the data was sequentially labeled and if there is one file per folder (you can set the name of this file below, i.e. multibodypartsfilename)
 # Otherwise there should be individual files per bodypart, i.e. in our demo case hand.csv, Finger1.csv etc.
 # If true then those files will be generated from Results.txt
-multibodypartsfile=False 
+multibodypartsfile=False
 multibodypartsfilename="Results.csv"
 
 # When importing the images and the labels in the csv/xls files should be in the same order!
-# During labeling in Fiji one can thus (for occluded body parts) click in the origin of the image 
+# During labeling in Fiji one can thus (for occluded body parts) click in the origin of the image
 #(i.e. top left corner (close to 0,0)), these "false" labels will then be removed. To do so set the following variable:
 #set this to 0 if no labels should be removed!
 
 invisibleboundary=10 # If labels are closer to origin than this number they are set to NaN (not a number). Please adjust to your situation. Units in pixel.
- 
-imagetype=".png" # image type of extracted frames (do not change if you used our step1). 
+
+imagetype=".png" # image type of extracted frames (do not change if you used our step1).
 # If you started from already extracted frames in a different format then change the format here (for step2 to 4).
 
 ########################################
@@ -65,7 +126,7 @@ msize=10   #size of labels
 alphavalue =.6 #transparency of labels
 
 ########################################
-# Step 4: Generate Training Files 
+# Step 4: Generate Training Files
 ########################################
 
 date = 'Jan30'
@@ -80,7 +141,7 @@ TrainingFraction = [0.95]  # Fraction of labeled images used for training
 resnet = 50
 
 # For Evaluation/ Analyzing videos
-# To evaluate the last model that was trained most set this to: -1 
+# To evaluate the last model that was trained most set this to: -1
 # To evaluate all models (training stages) set this to: "all"  (as string!)
 
 snapshotindex = -1 #"all"

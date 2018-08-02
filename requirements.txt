@@ -1,5 +1,7 @@
 pbr>=1.8
 
+oslo.config>=2.3.0 # Apache-2.0
+
 # From DLC
 chardet==3.0.4
 cloudpickle==0.5.3
