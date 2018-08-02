@@ -28,20 +28,22 @@ import os
 import math
 import sys
 
-from deeplabcut.myconfig import Task, vidpath, filename, x1, x2, y1, y2, portion, \
-    Scorers, bodyparts, date, cropping
+
+from deeplabcut import myconfig
+from deeplabcut.myconfig import Scorers, bodyparts, date
 from deeplabcut.train import auxiliaryfunctions
 
 # check global variables:
-print(Task)
-print(filename)
 print(bodyparts)
 print(Scorers)
 print(date)
 
+CONF = myconfig.CONF
 
-def select_random_frames():
-    basefolder = 'data-' + Task + '/'
+
+def select_random_frames(task=CONF.data.task):
+    task = CONF.data.task
+    basefolder = os.path.join(CONF.data.base_directory, "tasks", task)
     auxiliaryfunctions.attempttomakefolder(basefolder)
 
     #####################################################################
@@ -51,16 +53,16 @@ def select_random_frames():
     # Number of frames to pick (set this to 0 until you found right cropping)
     numframes2pick = 10
 
-    clip = VideoFileClip(vidpath + '/' + filename)
+    video_file = os.path.join(CONF.data.base_directory, CONF.data.video_file)
+    clip = VideoFileClip(video_file)
     print("Duration of video [s], ", clip.duration, "fps, ", clip.fps,
           "Cropped frame dimensions: ", clip.size)
 
     ny, nx = clip.size  # dimensions of frame (width, height)
 
-
     # Select ROI of interest by adjusting values in myconfig.py
-    if cropping==True:
-        clip = clip.crop(y1=y1, y2=y2, x1=x1, x2=x2)
+    if CONF.data.cropping:
+        clip = clip.crop(y1=CONF.data.y1, y2=CONF.data.y2, x1=CONF.data.x1, x2=CONF.data.x2)
 
     '''
     USAGE:
@@ -74,45 +76,50 @@ def select_random_frames():
     '''
 
     image = clip.get_frame(1.2)
-    io.imsave("IsCroppingOK.png", image)
-    print("--> Open CroppingOK.png file to set the output range! <---")
+    imgname = os.path.join(basefolder, "IsCroppingOK.png")
+    io.imsave(imgname, image)
+    print("--> Open %s file to set the output range! <---" % imgname)
     print("--> Adjust shiftx, shifty, fx and fy accordingly! <---")
+
 
     ####################################################
     # Creating folder with name of experiment and extract random frames
     ####################################################
 
-    print("Videoname: ", filename)
-    folder = filename.split('.')[0]
-    auxiliaryfunctions.attempttomakefolder(basefolder + folder)
+    print("Videoname: ", CONF.data.video_file)
+    folder = os.path.join(basefolder, CONF.data.video_file.split('.')[0])
+    print(folder)
+    auxiliaryfunctions.attempttomakefolder(folder)
 
     frames = np.random.randint(
-    math.floor(clip.duration * clip.fps * portion), size=numframes2pick - 1)
+    math.floor(clip.duration * clip.fps * CONF.data.portion), size=numframes2pick - 1)
     width = int(np.ceil(np.log10(clip.duration * clip.fps)))
 
     for index in frames:
         try:
             image = img_as_ubyte(clip.get_frame(index * 1. / clip.fps))
-            io.imsave(basefolder + folder + "/img" + str(index).zfill(width) + ".png",image)
+            imgname = os.path.join(folder, "img" + str(index).zfill(width) + ".png")
+            io.imsave(imgname, image)
         except FileNotFoundError:
             print("Frame # ", index, " does not exist.")
 
     # Extract the first frame (not cropped!) - useful for data augmentation
-    clip = VideoFileClip(vidpath + '/' + filename)
+    clip = VideoFileClip(video_file)
     index = 0
     image = img_as_ubyte(clip.get_frame(index * 1. / clip.fps))
-    io.imsave(basefolder + folder + "/img" + str(index).zfill(width) + ".png",
-              image)
+    imgname = os.path.join(folder, "img" + str(index).zfill(width) + ".png")
+    io.imsave(imgname, image)
 
 
 ###### Step 2
 
 import numpy as np
 import pandas as pd
-from deeplabcut.myconfig import Task, bodyparts, Scorers, invisibleboundary, multibodypartsfile, multibodypartsfilename, imagetype
+from deeplabcut.myconfig import bodyparts, Scorers, invisibleboundary, multibodypartsfile, multibodypartsfilename, imagetype
 
 def convert_labels_to_data_frame():
-    basefolder = 'data-' + Task + '/'
+    task = CONF.data.task
+    basefolder = os.path.join(CONF.data.base_directory, "tasks", task)
 
     ###################################################
     # Code if all bodyparts (per folder are shared in one file)
@@ -253,7 +260,7 @@ def convert_labels_to_data_frame():
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from deeplabcut.myconfig import Task, filename, bodyparts, Scorers, scale, msize, alphavalue, imagetype, colormap
+from deeplabcut.myconfig import bodyparts, Scorers, scale, msize, alphavalue, imagetype, colormap
 from deeplabcut.myconfig import scorer as cfg_scorer
 
 # https://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
@@ -286,7 +293,8 @@ def check_labels():
     print(all_joints_names)
 
 
-    basefolder = './' + 'data-' + Task
+    task = CONF.data.task
+    basefolder = os.path.join(CONF.data.base_directory, "tasks", task)
     numbodyparts = len(bodyparts)
 
     # Data frame to hold data of all data sets for different scorers, bodyparts and images
@@ -370,7 +378,7 @@ import yaml
 
 import scipy.io as sio
 
-from deeplabcut.myconfig import Task, bodyparts, date, scorer, Shuffles, TrainingFraction
+from deeplabcut.myconfig import bodyparts, date, scorer, Shuffles, TrainingFraction
 
 
 def SplitTrials(trialindex, trainFraction=0.8):
@@ -422,12 +430,13 @@ def generate_training_file_from_labelled_data():
     # Definitions (Folders, data source and labels)
     ####################################################
 
+    task = CONF.data.task
     # Loading scorer's data:
-    folder = 'data-' + Task + '/'
+    folder = 'data-' + task + '/'
     Data = pd.read_hdf(folder + 'CollectedData_' + scorer + '.h5',
                        'df_with_missing')[scorer]
     # Make that folder and put in the collecteddata (see below)
-    bf = "UnaugmentedDataSet_" + Task + date + "/"
+    bf = "UnaugmentedDataSet_" + task + date + "/"
 
     # This relative path is required due way DeeperCut is structured
     basefolder = "../../" + bf
@@ -439,7 +448,7 @@ def generate_training_file_from_labelled_data():
         for trainFraction in TrainingFraction:
             trainIndexes, testIndexes = SplitTrials(
                 range(len(Data.index)), trainFraction)
-            filename_matfile = Task + "_" + scorer + str(int(
+            filename_matfile = task + "_" + scorer + str(int(
                 100 * trainFraction)) + "shuffle" + str(shuffle)
             # Filename for pickle file:
             fn = bf + "Documentation_" + folder[:-1] + "_" + str(
@@ -513,7 +522,7 @@ def generate_training_file_from_labelled_data():
             # Test files as well as pose_yaml files (containing training and testing information)
             #################################################################################
 
-            experimentname = Task + date + '-trainset' + str(
+            experimentname = task + date + '-trainset' + str(
                 int(trainFraction * 100)) + 'shuffle' + str(shuffle)
 
             auxiliaryfunctions.attempttomakefolder(experimentname)
