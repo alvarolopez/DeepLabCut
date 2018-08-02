@@ -43,8 +43,8 @@ CONF = myconfig.CONF
 
 def select_random_frames(task=CONF.data.task):
     task = CONF.data.task
-    basefolder = os.path.join(CONF.data.base_directory, "tasks", task)
-    auxiliaryfunctions.attempttomakefolder(basefolder)
+    frame_folder = os.path.join(CONF.data.base_directory, "frames", task)
+    auxiliaryfunctions.attempttomakefolder(frame_folder)
 
     #####################################################################
     # First load the image and crop (if necessary).
@@ -53,7 +53,7 @@ def select_random_frames(task=CONF.data.task):
     # Number of frames to pick (set this to 0 until you found right cropping)
     numframes2pick = 10
 
-    video_file = os.path.join(CONF.data.base_directory, CONF.data.video_file)
+    video_file = os.path.join(CONF.data.base_directory, "raw", CONF.data.task, CONF.data.video_file)
     clip = VideoFileClip(video_file)
     print("Duration of video [s], ", clip.duration, "fps, ", clip.fps,
           "Cropped frame dimensions: ", clip.size)
@@ -76,7 +76,7 @@ def select_random_frames(task=CONF.data.task):
     '''
 
     image = clip.get_frame(1.2)
-    imgname = os.path.join(basefolder, "IsCroppingOK.png")
+    imgname = os.path.join(frame_folder, "IsCroppingOK.png")
     io.imsave(imgname, image)
     print("--> Open %s file to set the output range! <---" % imgname)
     print("--> Adjust shiftx, shifty, fx and fy accordingly! <---")
@@ -87,7 +87,7 @@ def select_random_frames(task=CONF.data.task):
     ####################################################
 
     print("Videoname: ", CONF.data.video_file)
-    folder = os.path.join(basefolder, CONF.data.video_file.split('.')[0])
+    folder = os.path.join(frame_folder, CONF.data.video_file.split('.')[0])
     print(folder)
     auxiliaryfunctions.attempttomakefolder(folder)
 
@@ -117,9 +117,10 @@ import numpy as np
 import pandas as pd
 from deeplabcut.myconfig import bodyparts, Scorers, invisibleboundary, multibodypartsfile, multibodypartsfilename, imagetype
 
+
 def convert_labels_to_data_frame():
     task = CONF.data.task
-    basefolder = os.path.join(CONF.data.base_directory, "tasks", task)
+    basefolder = os.path.join(CONF.data.base_directory, "labels", task)
 
     ###################################################
     # Code if all bodyparts (per folder are shared in one file)
