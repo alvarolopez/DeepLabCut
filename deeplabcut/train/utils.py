@@ -30,12 +30,10 @@ import sys
 
 
 from deeplabcut import myconfig
-from deeplabcut.myconfig import Scorers, bodyparts, date
+from deeplabcut.myconfig import date
 from deeplabcut.train import auxiliaryfunctions
 
 # check global variables:
-print(bodyparts)
-print(Scorers)
 print(date)
 
 CONF = myconfig.CONF
@@ -115,7 +113,6 @@ def select_random_frames(task=CONF.data.task):
 
 import numpy as np
 import pandas as pd
-from deeplabcut.myconfig import bodyparts, Scorers, invisibleboundary, multibodypartsfile, multibodypartsfilename, imagetype
 
 
 def convert_labels_to_data_frame():
@@ -130,11 +127,11 @@ def convert_labels_to_data_frame():
     ###################################################
 
     # FIXME(aloga): check this
-#    if multibodypartsfile==True:
+#    if CONF.dataframe.multibodypartsfile==True:
 #        folders = [name for name in os.listdir(frame_folder) if os.path.isdir(os.path.join(basefolder, name))]
 #        for folder in folders:
 #            # load csv, iterate over nth value in a grouping by frame, save to bodyparts files
-#            dframe = pd.read_csv(os.path.join(basefolder,folder,multibodypartsfilename))
+#            dframe = pd.read_csv(os.path.join(basefolder,folder,CONF.dataframe.multibodypartsfilename))
 #            frame_grouped = dframe.groupby('Slice') #Note: the order of bodyparts list in myconfig and labels must be identical!
 #            for i, bodypart in enumerate(bodyparts):
 #                part_df = frame_grouped.nth(i)
@@ -148,7 +145,7 @@ def convert_labels_to_data_frame():
     # Data frame to hold data of all data sets for different scorers,
     # bodyparts and images
     DataCombined = None
-    for scorer in Scorers:
+    for scorer in CONF.dataframe.scorers:
 #        os.chdir(label_folder)
         # Make list of different video data sets / each one has its own folder
         folders = [
@@ -181,7 +178,7 @@ def convert_labels_to_data_frame():
                 # if ("img" in fn and ".png" in fn and "_labelled" not in fn)])
                 files = [
                     fn for fn in os.listdir(frame_folder)
-                    if ("img" in fn and imagetype in fn and "_labelled" not in fn)
+                    if ("img" in fn and CONF.dataframe.imagetype in fn and "_labelled" not in fn)
                 ]
                 files.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
 
@@ -189,7 +186,7 @@ def convert_labels_to_data_frame():
                 Data_onefolder = pd.DataFrame({'Image name': imageaddress})
 
                 frame, Frame = None, None
-                for bodypart in bodyparts:
+                for bodypart in CONF.dataframe.bodyparts:
                     datafile = bodypart
                     datafile = os.path.join(label_folder, folder, datafile)
                     dframe = pd.read_csv(datafile + ".csv",sep=None,engine='python') #, sep='\t')
@@ -218,7 +215,7 @@ def convert_labels_to_data_frame():
                     Yrescaled = dframe.Y.values.astype(float)
 
                     # get rid of values that are invisible >> thus user scored in left corner!
-                    invisiblemarkersmask = (Xrescaled < invisibleboundary) * (Yrescaled < invisibleboundary)
+                    invisiblemarkersmask = (Xrescaled < CONF.dataframe.invisibleboundary) * (Yrescaled < CONF.dataframe.invisibleboundary)
                     Xrescaled[invisiblemarkersmask] = np.nan
                     Yrescaled[invisiblemarkersmask] = np.nan
 
@@ -266,7 +263,7 @@ def convert_labels_to_data_frame():
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from deeplabcut.myconfig import bodyparts, Scorers, scale, msize, alphavalue, imagetype, colormap
+from deeplabcut.myconfig import scale, msize, alphavalue, colormap
 from deeplabcut.myconfig import scorer as cfg_scorer
 
 # https://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
@@ -327,11 +324,11 @@ def check_labels():
         # sort image file names according to how they were stacked (when labeled in Fiji)
         files = [
             fn for fn in os.listdir(os.curdir)
-            if ("img" in fn and imagetype in fn and "_labeled" not in fn)
+            if ("img" in fn and CONF.dataframe.imagetype in fn and "_labeled" not in fn)
         ]
         files.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
 
-        comparisonbodyparts = bodyparts #list(set(DataCombined.columns.get_level_values(1)))
+        comparisonbodyparts = CONF.dataframe.bodyparts #list(set(DataCombined.columns.get_level_values(1)))
 
         for index, imagename in enumerate(files):
             image = io.imread(imagename)
@@ -352,7 +349,7 @@ def check_labels():
                 np.array(DataCombined.index.values) == folder + '/' + imagename)[0]
 
             plt.imshow(image, 'bone')
-            for cc, scorer in enumerate(Scorers):
+            for cc, scorer in enumerate(CONF.dataframe.scorers):
                 if index==0:
                     print("Creating images with labels by ", scorer)
                 for c, bp in enumerate(comparisonbodyparts):
@@ -384,7 +381,7 @@ import yaml
 
 import scipy.io as sio
 
-from deeplabcut.myconfig import bodyparts, date, scorer, Shuffles, TrainingFraction
+from deeplabcut.myconfig import date, scorer, Shuffles, TrainingFraction
 
 
 def SplitTrials(trialindex, trainFraction=0.8):
@@ -483,8 +480,8 @@ def generate_training_file_from_labelled_data():
                     H['size'] = np.array([1, np.shape(im)[0], np.shape(im)[1]])
 
                 indexjoints=0
-                joints=np.zeros((len(bodyparts),3))*np.nan
-                for bpindex,bodypart in enumerate(bodyparts):
+                joints=np.zeros((len(CONF.dataframe.bodyparts),3))*np.nan
+                for bpindex,bodypart in enumerate(CONF.dataframe.bodyparts):
                     if Data[bodypart]['x'][jj]<np.shape(im)[1] and Data[bodypart]['y'][jj]<np.shape(im)[0]: #are labels in image?
                             joints[indexjoints,0]=int(bpindex)
                             joints[indexjoints,1]=Data[bodypart]['x'][jj]
@@ -537,9 +534,9 @@ def generate_training_file_from_labelled_data():
 
             items2change = {
                 "dataset": basefolder + filename_matfile + '.mat',
-                "num_joints": len(bodyparts),
-                "all_joints": [[i] for i in range(len(bodyparts))],
-                "all_joints_names": bodyparts
+                "num_joints": len(CONF.dataframe.bodyparts),
+                "all_joints": [[i] for i in range(len(CONF.dataframe.bodyparts))],
+                "all_joints_names": CONF.dataframe.bodyparts
             }
 
             trainingdata = MakeTrain_pose_yaml(

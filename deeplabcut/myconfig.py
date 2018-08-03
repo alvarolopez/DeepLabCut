@@ -61,6 +61,55 @@ data_opts = [
 
 CONF.register_cli_opts(data_opts, group="data")
 
+dataframe_opts = [
+    cfg.ListOpt("bodyparts",
+                default=["hand", "Finger1", "Finger2","Joystick"],
+                help="Exact sequence of labels as were put by "
+                     "annotator in *csv files"
+    ),
+    cfg.ListOpt("scorers",
+                default=["Mackenzie"],
+                help="Who is labelling the data"
+    ),
+    cfg.BoolOpt("multibodypartsfile",
+                default=False,
+                help="Set this true if the data was sequentially "
+                     "labeled and if there is one file per folder "
+                     "(you can set the name of this file)."
+                     "Otherwise there should be individual files per "
+                     "bodypart, i.e. in our demo case hand.csv, "
+                     "Finger1.csv etc."
+                     "If true then those files will be generated from "
+                     "Results.txt"
+    ),
+    cfg.StrOpt("multibodypartsfilename",
+               default="Results.csv",
+               help="File name to use when multibodypartsfile=True"
+    ),
+    cfg.IntOpt("invisibleboundary",
+               default=10,
+               help="When importing the images and the labels in the csv/xls "
+                    "files should be in the same order!  During labeling in "
+                    "Fiji one can thus (for occluded body parts) click in the "
+                    "origin of the image i.e. top left corner (close to 0,0)),"
+                    " these 'false' labels will then be removed. To do so set "
+                    "the following variable: set this to 0 if no labels should"
+                    " be removed!"
+                    "If labels are closer to origin than this number they are "
+                    "set to NaN. Please adjust to your situation."
+                    "Units in pixel."
+    ),
+    cfg.StrOpt("imagetype",
+               default=".png",
+               help="Image type of extracted frames (do not change if you used"
+                    " our step1). If you started from already extracted frames"
+                    "in a different format then change the format here (for "
+                    "step2 to 4)."
+    ),
+]
+
+CONF.register_cli_opts(dataframe_opts, group="dataframe")
+
 #####################################################################################
 # This configuration file sets various parameters for generation of training
 # set & evalutation of DeepLabCut
@@ -96,24 +145,24 @@ CONF.register_cli_opts(data_opts, group="data")
 # Step 2: Converting frames to pandas array
 ########################################
 
-bodyparts = ["hand", "Finger1", "Finger2","Joystick"]  # Exact sequence of labels as were put by
+#bodyparts = ["hand", "Finger1", "Finger2","Joystick"]  # Exact sequence of labels as were put by
 # annotator in *.csv file
-Scorers = ['Mackenzie']  # who is labeling?
+#Scorers = ['Mackenzie']  # who is labeling?
 
 # Set this true if the data was sequentially labeled and if there is one file per folder (you can set the name of this file below, i.e. multibodypartsfilename)
 # Otherwise there should be individual files per bodypart, i.e. in our demo case hand.csv, Finger1.csv etc.
 # If true then those files will be generated from Results.txt
-multibodypartsfile=False
-multibodypartsfilename="Results.csv"
+#multibodypartsfile=False
+#multibodypartsfilename="Results.csv"
 
 # When importing the images and the labels in the csv/xls files should be in the same order!
 # During labeling in Fiji one can thus (for occluded body parts) click in the origin of the image
 #(i.e. top left corner (close to 0,0)), these "false" labels will then be removed. To do so set the following variable:
 #set this to 0 if no labels should be removed!
 
-invisibleboundary=10 # If labels are closer to origin than this number they are set to NaN (not a number). Please adjust to your situation. Units in pixel.
+#invisibleboundary=10 # If labels are closer to origin than this number they are set to NaN (not a number). Please adjust to your situation. Units in pixel.
 
-imagetype=".png" # image type of extracted frames (do not change if you used our step1).
+#imagetype=".png" # image type of extracted frames (do not change if you used our step1).
 # If you started from already extracted frames in a different format then change the format here (for step2 to 4).
 
 ########################################
