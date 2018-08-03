@@ -5,9 +5,9 @@ from scipy.misc import imresize
 
 import matplotlib.pyplot as plt
 
-from config import load_config
-from dataset.pose_dataset import Batch
-from dataset.factory import create as dataset_create
+from deeplabcut.pose_tensorflow.config import load_config
+from deeplabcut.pose_tensorflow.dataset.pose_dataset import Batch
+from deeplabcut.pose_tensorflow.dataset.factory import create as dataset_create
 
 def display_dataset():
     logging.basicConfig(level=logging.DEBUG)

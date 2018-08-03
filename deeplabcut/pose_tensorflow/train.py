@@ -1,14 +1,16 @@
+#! /usr/bin/env python3
+
 import logging
 import threading
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from config import load_config
-from dataset.factory import create as create_dataset
-from nnet.net_factory import pose_net
-from nnet.pose_net import get_batch_spec
-from util.logging import setup_logging
+from deeplabcut.pose_tensorflow.config import load_config
+from deeplabcut.pose_tensorflow.dataset.factory import create as create_dataset
+from deeplabcut.pose_tensorflow.nnet.net_factory import pose_net
+from deeplabcut.pose_tensorflow.nnet.pose_net import get_batch_spec
+from deeplabcut.pose_tensorflow.util.logging import setup_logging
 
 
 class LearningRate(object):
