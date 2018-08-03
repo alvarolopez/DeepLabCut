@@ -263,17 +263,20 @@ def convert_labels_to_data_frame():
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from deeplabcut.myconfig import scale, msize, alphavalue, colormap
-from deeplabcut.myconfig import scorer as cfg_scorer
 
 # https://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
-def get_cmap(n, name=colormap):
+def get_cmap(n, name=CONF.label.colormap):
     '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct
     RGB color; the keyword argument name must be a standard mpl colormap name.'''
     return plt.cm.get_cmap(name, n)
 
 
 def check_labels():
+    scale = CONF.label.scale
+    msize = CONF.label.label_size
+    alphavalue = CONF.label.alpha
+    colormap = CONF.label.colormap
+
     ###################################################
     # Code if each bodypart has its own label file!
     ###################################################
@@ -284,6 +287,7 @@ def check_labels():
     # Make sure you update the train.yaml file!
     #############################################
 
+    bodyparts = CONF.dataframe.bodyparts
     num_joints = len(bodyparts)
     all_joints = map(lambda j: [j], range(num_joints))
     all_joints_names = bodyparts
@@ -297,41 +301,43 @@ def check_labels():
 
 
     task = CONF.data.task
-    basefolder = os.path.join(CONF.data.base_directory, "tasks", task)
+    frame_folder = os.path.join(CONF.data.base_directory, "frames", task)
+    label_folder = os.path.join(CONF.data.base_directory, "labels", task)
+
     numbodyparts = len(bodyparts)
 
     # Data frame to hold data of all data sets for different scorers, bodyparts and images
     DataCombined = None
 
-    os.chdir(basefolder)
+#    os.chdir(basefolder)
 
-    DataCombined = pd.read_hdf(
-        'CollectedData_' + cfg_scorer + '.h5', 'df_with_missing')
+    filename = 'CollectedData_' + CONF.label.scorer + '.h5'
+    aux = os.path.join(label_folder, filename)
+    DataCombined = pd.read_hdf(aux, 'df_with_missing')
 
     # Make list of different video data sets:
     folders = [
-        videodatasets for videodatasets in os.listdir(os.curdir)
-        if os.path.isdir(videodatasets) and 'labeled' not in videodatasets
+        videodatasets for videodatasets in os.listdir(frame_folder)
+        if os.path.isdir(os.path.join(frame_folder, videodatasets))
     ]
 
     print(folders)
     # videos=np.sort([fn for fn in os.listdir(os.curdir) if ("avi" in fn)])
 
     for folder in folders:
-        tmpfolder = folder + 'labeled'
-        auxiliaryfunctions.attempttomakefolder(tmpfolder)
-        os.chdir(folder)
+        tmp_folder = os.path.join(CONF.data.base_directory, "tmp", task, folder)
+        auxiliaryfunctions.attempttomakefolder(tmp_folder)
+        frame_folder = os.path.join(frame_folder, folder)
         # sort image file names according to how they were stacked (when labeled in Fiji)
         files = [
-            fn for fn in os.listdir(os.curdir)
-            if ("img" in fn and CONF.dataframe.imagetype in fn and "_labeled" not in fn)
+            fn for fn in os.listdir(frame_folder)
+            if ("img" in fn and CONF.dataframe.imagetype in fn and "_labelled" not in fn)
         ]
-        files.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
 
-        comparisonbodyparts = CONF.dataframe.bodyparts #list(set(DataCombined.columns.get_level_values(1)))
+        comparisonbodyparts = bodyparts #list(set(DataCombined.columns.get_level_values(1)))
 
         for index, imagename in enumerate(files):
-            image = io.imread(imagename)
+            image = io.imread(os.path.join(frame_folder, imagename))
             plt.axis('off')
 
             if np.ndim(image)==2:
@@ -345,8 +351,9 @@ def check_labels():
                 left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
 
             # This is important when using data combined / which runs consecutively!
+            aux = os.path.join(os.path.join(frame_folder, imagename))
             imindex = np.where(
-                np.array(DataCombined.index.values) == folder + '/' + imagename)[0]
+                np.array(DataCombined.index.values) == aux)[0]
 
             plt.imshow(image, 'bone')
             for cc, scorer in enumerate(CONF.dataframe.scorers):
@@ -367,11 +374,8 @@ def check_labels():
             plt.subplots_adjust(
                 left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
             plt.gca().invert_yaxis()
-            plt.savefig('../' + tmpfolder + '/' + imagename)
+            plt.savefig(os.path.join(tmp_folder, imagename))
             plt.close("all")
-
-        os.chdir("../")
-
 
 # Step 4
 

@@ -169,10 +169,34 @@ CONF.register_cli_opts(dataframe_opts, group="dataframe")
 # Step 3: Check labels / makes plots
 ########################################
 
-colormap = 'cool' #set color map, i.e. viridis, cool, hsv
-scale = 1  # for plotting
-msize=10   #size of labels
-alphavalue =.6 #transparency of labels
+label_opts = [
+    cfg.StrOpt("colormap",
+               default="cool",
+               help="Set color map (e.g. viridis, cool, hsv)"
+    ),
+    cfg.FloatOpt("scale",
+                 default=1,
+                 help="Set scaling for plotting"
+    ),
+    cfg.IntOpt("label-size",
+               default=10,
+               help="Label size"
+    ),
+    cfg.FloatOpt("alpha",
+                 default=0.6,
+                 help="Label transparency"
+    ),
+    cfg.StrOpt("scorer",
+               default="Mackenzie",
+               help="Who has labelled the data"
+    ),
+]
+
+CONF.register_opts(label_opts, group="label")
+#colormap = 'cool' #set color map, i.e. viridis, cool, hsv
+#scale = 1  # for plotting
+#msize=10   #size of labels
+#alphavalue =.6 #transparency of labels
 
 ########################################
 # Step 4: Generate Training Files
