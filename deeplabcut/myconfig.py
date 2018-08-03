@@ -202,22 +202,42 @@ CONF.register_opts(label_opts, group="label")
 # Step 4: Generate Training Files
 ########################################
 
-date = 'Jan30'
-scorer = 'Mackenzie'
+net_opts = [
+    cfg.StrOpt("date",
+               default="Jan30",
+    ),
+    cfg.ListOpt("shuffles",
+                default=[1],
+                item_type=int,
+                help="Ids for shuffles, i.e. range(5) for 5 shuffles"
+    ),
+    cfg.ListOpt("training-fraction",
+                default=[0.95],
+                item_type=float,
+                help="Fraction of labeled images used for training"
+    ),
+    cfg.StrOpt("resnet",
+               default="50",
+               help="Which resnet to use",
+    ),
+]
+CONF.register_opts(net_opts, group="net")
+#date = 'Jan30'
+#scorer = 'Mackenzie'
 
 # Userparameters for training set. Other parameters can be set in pose_cfg.yaml
-Shuffles = [1]  # Ids for shuffles, i.e. range(5) for 5 shuffles
-TrainingFraction = [0.95]  # Fraction of labeled images used for training
+#Shuffles = [1]  # Ids for shuffles, i.e. range(5) for 5 shuffles
+#TrainingFraction = [0.95]  # Fraction of labeled images used for training
 
 # Which resnet to use
 # (these are parameters reflected in the pose_cfg.yaml file)
-resnet = 50
+#resnet = 50
 
 # For Evaluation/ Analyzing videos
 # To evaluate the last model that was trained most set this to: -1
 # To evaluate all models (training stages) set this to: "all"  (as string!)
 
-snapshotindex = -1 #"all"
-shuffleindex = 0
-pcutoff=.1 # likelihood. RMSE will be reported for all pairs and pairs with larger likelihood than pcutoff (see paper). This cutoff will also be used in plots.
+#snapshotindex = -1 #"all"
+#shuffleindex = 0
+#pcutoff=.1 # likelihood. RMSE will be reported for all pairs and pairs with larger likelihood than pcutoff (see paper). This cutoff will also be used in plots.
 plotting=True #If true will plot train & test images including DeepLabCut labels next to human labels. Note that this will be plotted for all snapshots as indicated by snapshotindex
