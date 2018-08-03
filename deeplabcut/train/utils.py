@@ -479,7 +479,7 @@ def generate_training_file_from_labelled_data():
                 # load image to get dimensions:
                 filename = Data.index[jj]
                 aux_path = os.path.relpath(filename, frame_folder)
-                H['image'] = os.path.join(base_folder, "frames", aux_path)
+                H['image'] = os.path.abspath(os.path.join(base_folder, "frames", aux_path))
                 im = io.imread(H["image"])
 
                 if np.ndim(im)>2:
@@ -546,7 +546,7 @@ def generate_training_file_from_labelled_data():
             auxiliaryfunctions.attempttomakefolder(os.path.join(experiment_folder, 'test'))
 
             items2change = {
-                "dataset": os.path.join(base_folder, filename_matfile + '.mat'),
+                "dataset": os.path.abspath(os.path.join(base_folder, filename_matfile + '.mat')),
                 "num_joints": len(CONF.dataframe.bodyparts),
                 "all_joints": [[i] for i in range(len(CONF.dataframe.bodyparts))],
                 "all_joints_names": CONF.dataframe.bodyparts
