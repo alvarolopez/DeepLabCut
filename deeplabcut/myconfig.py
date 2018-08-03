@@ -225,6 +225,14 @@ CONF.register_opts(net_opts, group="net")
 #date = 'Jan30'
 #scorer = 'Mackenzie'
 
+evaluation_opts = [
+    cfg.StrOpt("snapshotindex",
+               default="-1",
+               help="To evaluate the last model that was trained most set this to: -1, "
+                    "To evaluate all models (training stages) set this to: 'all'  (as string!)"
+    ),
+]
+CONF.register_opts(evaluation_opts, group="evaluation")
 # Userparameters for training set. Other parameters can be set in pose_cfg.yaml
 #Shuffles = [1]  # Ids for shuffles, i.e. range(5) for 5 shuffles
 #TrainingFraction = [0.95]  # Fraction of labeled images used for training
@@ -240,4 +248,4 @@ CONF.register_opts(net_opts, group="net")
 #snapshotindex = -1 #"all"
 #shuffleindex = 0
 #pcutoff=.1 # likelihood. RMSE will be reported for all pairs and pairs with larger likelihood than pcutoff (see paper). This cutoff will also be used in plots.
-plotting=True #If true will plot train & test images including DeepLabCut labels next to human labels. Note that this will be plotted for all snapshots as indicated by snapshotindex
+#plotting=True #If true will plot train & test images including DeepLabCut labels next to human labels. Note that this will be plotted for all snapshots as indicated by snapshotindex
