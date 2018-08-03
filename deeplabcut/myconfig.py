@@ -231,8 +231,16 @@ evaluation_opts = [
                help="To evaluate the last model that was trained most set this to: -1, "
                     "To evaluate all models (training stages) set this to: 'all'  (as string!)"
     ),
+    cfg.BoolOpt("plotting",
+                default=True,
+                help="If true will plot train & test images including DeepLabCut labels next to human labels. Note that this will be plotted for all snapshots as indicated by snapshotindex"
+    ),
+    cfg.FloatOpt("pcutoff",
+                 default=.1,
+                 help="likelihood. RMSE will be reported for all pairs and pairs with larger likelihood than pcutoff (see paper). This cutoff will also be used in plots."
+    ),
 ]
-CONF.register_opts(evaluation_opts, group="evaluation")
+CONF.register_cli_opts(evaluation_opts, group="evaluation")
 # Userparameters for training set. Other parameters can be set in pose_cfg.yaml
 #Shuffles = [1]  # Ids for shuffles, i.e. range(5) for 5 shuffles
 #TrainingFraction = [0.95]  # Fraction of labeled images used for training
