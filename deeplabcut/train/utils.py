@@ -120,7 +120,8 @@ from deeplabcut.myconfig import bodyparts, Scorers, invisibleboundary, multibody
 
 def convert_labels_to_data_frame():
     task = CONF.data.task
-    basefolder = os.path.join(CONF.data.base_directory, "labels", task)
+    frame_folder = os.path.join(CONF.data.base_directory, "frames", task)
+    label_folder = os.path.join(CONF.data.base_directory, "labels", task)
 
     ###################################################
     # Code if all bodyparts (per folder are shared in one file)
@@ -128,16 +129,17 @@ def convert_labels_to_data_frame():
     # Based on an idea by @sneakers-the-rat
     ###################################################
 
-    if multibodypartsfile==True:
-        folders = [name for name in os.listdir(basefolder) if os.path.isdir(os.path.join(basefolder, name))]
-        for folder in folders:
-            # load csv, iterate over nth value in a grouping by frame, save to bodyparts files
-            dframe = pd.read_csv(os.path.join(basefolder,folder,multibodypartsfilename))
-            frame_grouped = dframe.groupby('Slice') #Note: the order of bodyparts list in myconfig and labels must be identical!
-            for i, bodypart in enumerate(bodyparts):
-                part_df = frame_grouped.nth(i)
-                part_fn =  part_fn = os.path.join(basefolder,folder,bodypart+'.csv')
-                part_df.to_csv(part_fn)
+    # FIXME(aloga): check this
+#    if multibodypartsfile==True:
+#        folders = [name for name in os.listdir(frame_folder) if os.path.isdir(os.path.join(basefolder, name))]
+#        for folder in folders:
+#            # load csv, iterate over nth value in a grouping by frame, save to bodyparts files
+#            dframe = pd.read_csv(os.path.join(basefolder,folder,multibodypartsfilename))
+#            frame_grouped = dframe.groupby('Slice') #Note: the order of bodyparts list in myconfig and labels must be identical!
+#            for i, bodypart in enumerate(bodyparts):
+#                part_df = frame_grouped.nth(i)
+#                part_fn =  part_fn = os.path.join(basefolder,folder,bodypart+'.csv')
+#                part_df.to_csv(part_fn)
 
     ###################################################
     # Code if each bodypart has its own label file!
@@ -147,15 +149,17 @@ def convert_labels_to_data_frame():
     # bodyparts and images
     DataCombined = None
     for scorer in Scorers:
-        os.chdir(basefolder)
+#        os.chdir(label_folder)
         # Make list of different video data sets / each one has its own folder
         folders = [
-            videodatasets for videodatasets in os.listdir(os.curdir)
-            if os.path.isdir(videodatasets)
+            videodatasets for videodatasets in os.listdir(frame_folder)
+            if os.path.isdir(os.path.join(frame_folder, videodatasets))
         ]
         try:
-            DataSingleUser = pd.read_hdf('CollectedData_' + scorer + '.h5',
-                                         'df_with_missing')
+            filename = 'CollectedData_' + scorer + '.h5'
+            aux = os.path.join(label_folder, filename)
+            print(aux)
+            DataSingleUser = pd.read_hdf(aux, 'df_with_missing')
             numdistinctfolders = list(
                 set([s.split('/')[0] for s in DataSingleUser.index
                      ]))  # NOTE: SLICING to eliminate multiindices!
@@ -171,28 +175,30 @@ def convert_labels_to_data_frame():
 
         if DataSingleUser is None:
             for folder in folders:
-                # print("Loading folder ", folder)
-                os.chdir(folder)
+                frame_folder = os.path.join(frame_folder, folder)
                 # sort image file names according to how they were stacked
                 # files=np.sort([fn for fn in os.listdir(os.curdir)
                 # if ("img" in fn and ".png" in fn and "_labelled" not in fn)])
                 files = [
-                    fn for fn in os.listdir(os.curdir)
+                    fn for fn in os.listdir(frame_folder)
                     if ("img" in fn and imagetype in fn and "_labelled" not in fn)
                 ]
                 files.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
 
-                imageaddress = [folder + '/' + f for f in files]
+                imageaddress = [os.path.join(frame_folder, f) for f in files]
                 Data_onefolder = pd.DataFrame({'Image name': imageaddress})
 
                 frame, Frame = None, None
                 for bodypart in bodyparts:
                     datafile = bodypart
-                    try:
-                        dframe = pd.read_csv(datafile + ".xls",sep=None,engine='python') #, sep='\t')
-                    except FileNotFoundError:
-                        os.rename(datafile + ".csv", datafile + ".xls")
-                        dframe = pd.read_csv(datafile + ".xls",sep=None,engine='python') #, sep='\t')
+                    datafile = os.path.join(label_folder, folder, datafile)
+                    dframe = pd.read_csv(datafile + ".csv",sep=None,engine='python') #, sep='\t')
+                    # NOTE(aloga): why is this being moved?
+#                    try:
+#                        dframe = pd.read_csv(datafile + ".xls",sep=None,engine='python') #, sep='\t')
+#                    except FileNotFoundError:
+#                        os.rename(datafile + ".csv", datafile + ".xls")
+#                        dframe = pd.read_csv(datafile + ".xls",sep=None,engine='python') #, sep='\t')
 
                     # Note: If your csv file is not correctly loaded, then a common error is:
                     # "AttributeError: 'DataFrame' object has no attribute 'X'" or the corresponding error with Slice
@@ -240,18 +246,17 @@ def convert_labels_to_data_frame():
                     DataSingleUser = pd.concat(
                         [DataSingleUser, Frame], axis=0)  # along filenames!
 
-                os.chdir('../')
-
             # Save data by this scorer
-            DataSingleUser.to_csv("CollectedData_" + scorer +
-                                  ".csv")  # breaks multiindices HDF5 tables better!
-            DataSingleUser.to_hdf(
-                'CollectedData_' + scorer + '.h5',
-                'df_with_missing',
-                format='table',
-                mode='w')
+            filename = 'CollectedData_' + scorer + '.csv'
+            aux = os.path.join(label_folder, filename)
+            DataSingleUser.to_csv(aux)  # breaks multiindices HDF5 tables better!
 
-        os.chdir('../')
+            filename = 'CollectedData_' + scorer + '.h5'
+            aux = os.path.join(label_folder, filename)
+            DataSingleUser.to_hdf(aux,
+                                  'df_with_missing',
+                                  format='table',
+                                  mode='w')
 
         print("Merging scorer's data.")
 
