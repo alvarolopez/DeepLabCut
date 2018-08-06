@@ -20,6 +20,7 @@ CUDA_VISIBLE_DEVICES=0 python3 Step1_EvaluateModelonDataset.py
 import os
 
 from deeplabcut import myconfig
+from deeplabcut import paths
 import numpy as np
 import pandas as pd
 
@@ -35,9 +36,7 @@ def main():
     # Loading data and evaluating network on data
     ####################################################
 
-    base_folder = os.path.join(CONF.data.base_directory,
-                               "train",
-                               CONF.data.task)
+    base_folder = paths.base_dir
 
     for shuffleIndex, shuffle in enumerate(CONF.net.shuffles):
         for (trainFractionIndex,
@@ -47,27 +46,15 @@ def main():
             # split).
             ###################################################################
 
-            experimentname = (
-                CONF.data.task + CONF.net.date + '-trainset' +
-                str(int(trainFraction * 100)) + 'shuffle' + str(shuffle)
-            )
-            modelfolder = os.path.join(base_folder, experimentname)
-            print(modelfolder)
-            cfg = load_config(os.path.join(base_folder,
-                                           experimentname,
-                                           'test',
-                                           "pose_cfg.yaml"))
+            modelfolder = paths.get_experiment_name(trainFraction, shuffle)
+            cfg = load_config(paths.get_pose_cfg_test(trainFraction, shuffle))
+
             # Check which snap shots are available and sort them by #
             # iterations
-            Snapshots = np.array([
-                fn.split('.')[0]
-                for fn in os.listdir(os.path.join(base_folder,
-                                                  experimentname,
-                                                  'train'))
-                if "index" in fn])
-
+            Snapshots = np.array(paths.get_train_snapshots(trainFraction,
+                                                           shuffle))
             increasing_indices = np.argsort(
-                [int(m.split('-')[1]) for m in Snapshots]
+                [int(m.rsplit('-', 1)[1]) for m in Snapshots]
             )
             Snapshots = Snapshots[increasing_indices]
 
@@ -85,25 +72,22 @@ def main():
                           "up to last, or all (as string)!")
 
             for snapIndex in snapindices:
-                cfg['init_weights'] = os.path.join(modelfolder,
-                                                   'train',
-                                                   Snapshots[snapIndex])
-                trainingsiterations = (
-                    cfg['init_weights'].split('/')[-1]).split('-')[-1]
-                scorer = (
-                    'DeepCut' + "_" + str(cfg["net_type"]) + "_" +
-                    str(int(trainFraction * 100)) + 'shuffle' + str(shuffle) +
-                    '_' + str(trainingsiterations) + "forTask_" +
-                    CONF.data.task)
+                cfg['init_weights'] = Snapshots[snapIndex]
+                trainingsiterations = cfg['init_weights'].rsplit('-')[-1]
+
+                scorer = paths.get_scorer_name(cfg["net_type"],
+                                               trainFraction,
+                                               shuffle,
+                                               trainingsiterations)
 
                 print("Running ", scorer,
                       " with # of trainingiterations:", trainingsiterations)
 
-                results_dir = os.path.join(CONF.data.base_directory, "results")
-
                 try:
-                    pd.read_hdf(os.path.join(results_dir,
-                                             scorer + '.h5'),
+                    pd.read_hdf(paths.get_scorer_file(cfg["net_type"],
+                                                      trainFraction,
+                                                      shuffle,
+                                                      trainingsiterations),
                                 'df_with_missing')
                     print("This net has already been evaluated!")
                 except FileNotFoundError:

@@ -17,7 +17,7 @@ def attempttomakefolder(foldername):
         os.makedirs(foldername)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(foldername):
-            print("Folder already exists!")
+            print("Folder already exists!", foldername)
         else:
             raise
 

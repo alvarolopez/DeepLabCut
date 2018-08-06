@@ -29,8 +29,11 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import os
+import shutil
+import tempfile
 
 from deeplabcut import myconfig
+from deeplabcut import paths
 from deeplabcut import utils
 
 CONF = myconfig.CONF
@@ -48,7 +51,7 @@ def get_cmap(n, name=CONF.label.colormap):
     return plt.cm.get_cmap(name, n)
 
 
-def CreateVideo(clip, Dataframe, videofolder, tmpfolder, vname):
+def CreateVideo(clip, Dataframe, outdir, tmpfolder, vname):
     '''Creating individual frames with labeled body parts and making a video'''
     scorer = np.unique(Dataframe.columns.get_level_values(0))[0]
     bodyparts2plot = list(np.unique(Dataframe.columns.get_level_values(1)))
@@ -119,57 +122,49 @@ def CreateVideo(clip, Dataframe, videofolder, tmpfolder, vname):
         '-framerate', str(clip.fps),
         '-i', os.path.join(tmpfolder, 'file%04d.png'),
         '-r', '30',
-        os.path.join(videofolder, vname + '_DeepLabCutlabeled.mp4')])
-# FIXME(aloga): add this missing option
-#    if deleteindividualframes:
-#        for file_name in glob.glob("*.png"):
-#            os.remove(file_name)
+        os.path.join(outdir, vname + '_DeepLabCutlabeled.mp4')])
 
 
-def main():
+def main(videofolder=None):
 
     # Name for scorer based on passed on parameters from myconfig_analysis.
     # Make sure they refer to the network of interest.
-    scorer = ('DeepCut' + "_resnet" + str(CONF.net.resnet) + "_" +
-              CONF.data.task + str(CONF.net.date) + 'shuffle' +
-              str(CONF.analysis.shuffle_index) + '_' +
-              str(CONF.analysis.trainings_iterations))
+    scorer = paths.get_scorer_name(CONF.net.resnet,
+                                   CONF.analysis.trainings_fraction,
+                                   CONF.analysis.shuffle_index,
+                                   CONF.analysis.trainings_iterations)
 
     ##################################################
     # Datafolder
     ##################################################
 
-    videofolder = CONF.analysis.video_directory
-    videotype = CONF.analysis.video_type
+    if videofolder is None:
+        videofolder = paths.video_dir
 
-    videos = np.sort([fn for fn in os.listdir(videofolder)
-                      if (videotype in fn) and ("labeled" not in fn)])
-    print(videos)
-
-    print("Starting ", videofolder, videos)
+    videos = paths.get_videos(videofolder)
+    print("Starting ", videos)
     for video in videos:
-        vname = video.split('.')[0]
+        vname = os.path.basename(video.split('.')[0])
 
-        # FIXME(aloga): use correct tmp folder here
-        tmpfolder = 'temp' + vname
-        utils.attempttomakefolder(tmpfolder)
+        outdir = paths.get_video_outdir(video)
 
-        if os.path.isfile(os.path.join(tmpfolder,
+        if os.path.isfile(os.path.join(outdir,
                                        vname + '_DeepLabCutlabeled.mp4')):
             print("Labeled video already created.")
         else:
             print("Loading ", video, "and data.")
-            dataname = video.split('.')[0] + scorer + '.h5'
-            dataname = os.path.join(videofolder, dataname)
+            dataname = paths.get_video_dataname(video, scorer)
             # to load data for this video + scorer
+
+            # FIXME(aloga): use correct tmp folder here
+            tmpfolder = tempfile.mkdtemp(prefix="tmp_" + vname,
+                                         dir=outdir)
             try:
                 Dataframe = pd.read_hdf(dataname)
                 clip = VideoFileClip(os.path.join(videofolder, video))
                 CreateVideo(clip, Dataframe, videofolder, tmpfolder, vname)
             except FileNotFoundError:
-                datanames = [fn for fn in os.listdir(videofolder)
-                             if ((vname in fn) and
-                                 (".h5" in fn) and "resnet" in fn)]
+                datanames = paths.get_video_all_datanames(video)
                 if len(datanames) == 0:
                     print("The video was not analyzed with this scorer:",
                           scorer)
@@ -186,4 +181,7 @@ def main():
 
                     Dataframe = pd.read_hdf(datanames[0])
                     clip = VideoFileClip(video)
-                    CreateVideo(clip, Dataframe)
+                    CreateVideo(clip, Dataframe, outdir, tmpfolder, vname)
+            finally:
+                if CONF.analysis.delete_individual_frames:
+                    shutil.rmtree(tmpfolder, ignore_errors=True)

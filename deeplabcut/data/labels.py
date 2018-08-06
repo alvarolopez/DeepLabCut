@@ -27,6 +27,7 @@ import pandas as pd
 from skimage import io
 
 from deeplabcut import myconfig
+from deeplabcut import paths
 from deeplabcut import utils
 
 CONF = myconfig.CONF
@@ -40,9 +41,8 @@ def convert_labels_to_data_frame():
     different file e.g.  ImageJ / Fiji
     """
 
-    task = CONF.data.task
-    frame_folder = os.path.join(CONF.data.base_directory, "frames", task)
-    label_folder = os.path.join(CONF.data.base_directory, "labels", task)
+    frame_folder = paths.frame_dir
+    label_folder = paths.label_dir
 
     ###################################################
     # Code if all bodyparts (per folder are shared in one file)
@@ -74,15 +74,10 @@ def convert_labels_to_data_frame():
 
     for scorer in CONF.dataframe.scorers:
         # Make list of different video data sets / each one has its own folder
-        folders = [
-            videodatasets for videodatasets in os.listdir(frame_folder)
-            if os.path.isdir(os.path.join(frame_folder, videodatasets))
-        ]
+        folders = paths.get_video_datasets()
         try:
-            filename = 'CollectedData_' + scorer + '.h5'
-            aux = os.path.join(label_folder, filename)
-            print(aux)
-            DataSingleUser = pd.read_hdf(aux, 'df_with_missing')
+            filename = paths.get_collected_data_file(scorer)
+            DataSingleUser = pd.read_hdf(filename, 'df_with_missing')
             # NOTE: SLICING to eliminate multiindices!
             numdistinctfolders = list(
                 set([s.split('/')[0] for s in DataSingleUser.index
@@ -99,20 +94,7 @@ def convert_labels_to_data_frame():
 
         if DataSingleUser is None:
             for folder in folders:
-                frame_folder = os.path.join(frame_folder, folder)
-                # sort image file names according to how they were stacked
-                # files=np.sort([fn for fn in os.listdir(os.curdir)
-                # if ("img" in fn and ".png" in fn and "_labelled" not in fn)])
-                files = [
-                    fn for fn in os.listdir(frame_folder)
-                    if ("img" in fn and
-                        CONF.dataframe.imagetype in fn and
-                        "_labelled" not in fn)
-                ]
-                files.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
-
-                imageaddress = [os.path.join(frame_folder, f) for f in files]
-#                Data_onefolder = pd.DataFrame({'Image name': imageaddress})
+                files = paths.get_video_dataset_frames(folder)
 
                 frame, Frame = None, None
                 for bodypart in CONF.dataframe.bodyparts:
@@ -123,7 +105,7 @@ def convert_labels_to_data_frame():
                                          sep=None,
                                          engine='python')
 
-                    if dframe.shape[0] != len(imageaddress):
+                    if dframe.shape[0] != len(files):
                         new_index = pd.Index(
                             np.arange(len(files)) + 1, name='Slice')
                         dframe = dframe.set_index('Slice').reindex(new_index)
@@ -146,18 +128,18 @@ def convert_labels_to_data_frame():
 
                     if Frame is None:
                         # frame=pd.DataFrame(np.vstack([dframe.X,dframe.Y]).T,
-                        # columns=index,index=imageaddress)
+                        # columns=index,index=files)
                         frame = pd.DataFrame(
                             np.vstack([Xrescaled, Yrescaled]).T,
                             columns=index,
-                            index=imageaddress)
+                            index=files)
                         # print(frame.head())
                         Frame = frame
                     else:
                         frame = pd.DataFrame(
                             np.vstack([Xrescaled, Yrescaled]).T,
                             columns=index,
-                            index=imageaddress)
+                            index=files)
                         Frame = pd.concat(
                             [Frame, frame],
                             axis=1)  # along bodyparts & scorer dimension
@@ -170,14 +152,12 @@ def convert_labels_to_data_frame():
                         [DataSingleUser, Frame], axis=0)  # along filenames!
 
             # Save data by this scorer
-            filename = 'CollectedData_' + scorer + '.csv'
-            aux = os.path.join(label_folder, filename)
+            filename = paths.get_collected_data_file(scorer, filetype='.csv')
             # breaks multiindices HDF5 tables better!
-            DataSingleUser.to_csv(aux)
+            DataSingleUser.to_csv(filename)
 
-            filename = 'CollectedData_' + scorer + '.h5'
-            aux = os.path.join(label_folder, filename)
-            DataSingleUser.to_hdf(aux,
+            filename = paths.get_collected_data_file(scorer)
+            DataSingleUser.to_hdf(filename,
                                   'df_with_missing',
                                   format='table',
                                   mode='w')
@@ -227,48 +207,35 @@ def check_labels():
     print(all_joints)
     print(all_joints_names)
 
-    task = CONF.data.task
-    frame_folder = os.path.join(CONF.data.base_directory, "frames", task)
-    label_folder = os.path.join(CONF.data.base_directory, "labels", task)
+    frame_folder = paths.frame_dir
+    label_folder = paths.label_dir
 
     # Data frame to hold data of all data sets for different scorers, bodyparts
     # and images
     DataCombined = None
 
-    filename = 'CollectedData_' + CONF.label.scorer + '.h5'
-    aux = os.path.join(label_folder, filename)
-    DataCombined = pd.read_hdf(aux, 'df_with_missing')
+    filename = paths.get_collected_data_file(CONF.label.scorer)
+    DataCombined = pd.read_hdf(filename, 'df_with_missing')
 
-    # Make list of different video data sets:
-    folders = [
-        videodatasets for videodatasets in os.listdir(frame_folder)
-        if os.path.isdir(os.path.join(frame_folder, videodatasets))
-    ]
+    # Make list of different video data sets in frame folder:
+    folders = paths.get_video_datasets()
 
-    print(folders)
     # videos=np.sort([fn for fn in os.listdir(os.curdir) if ("avi" in fn)])
 
+    # Create evaluation images for each of the folders
     for folder in folders:
-        tmp_folder = os.path.join(CONF.data.base_directory,
-                                  "tmp",
-                                  task,
-                                  folder)
+        # Store data in a tmp directory with the same folder name
+        tmp_folder = paths.get_tmp_dir(folder)
         utils.attempttomakefolder(tmp_folder)
-        frame_folder = os.path.join(frame_folder, folder)
-        # sort image file names according to how they were stacked (when
-        # labeled in Fiji)
-        files = [
-            fn for fn in os.listdir(frame_folder)
-            if ("img" in fn and
-                CONF.dataframe.imagetype in fn and
-                "_labelled" not in fn)
-        ]
+
+        files = paths.get_video_dataset_frames(folder)
 
         comparisonbodyparts = bodyparts
         # list(set(DataCombined.columns.get_level_values(1)))
 
-        for index, imagename in enumerate(files):
-            image = io.imread(os.path.join(frame_folder, imagename))
+        # Read images in the folder
+        for index, image_path in enumerate(files):
+            image = io.imread(image_path)
             plt.axis('off')
 
             if np.ndim(image) == 2:
@@ -285,9 +252,8 @@ def check_labels():
 
             # This is important when using data combined / which runs
             # consecutively!
-            aux = os.path.join(os.path.join(frame_folder, imagename))
             imindex = np.where(
-                np.array(DataCombined.index.values) == aux)[0]
+                np.array(DataCombined.index.values) == image_path)[0]
 
             plt.imshow(image, 'bone')
             for cc, scorer in enumerate(CONF.dataframe.scorers):
@@ -308,5 +274,7 @@ def check_labels():
             plt.subplots_adjust(
                 left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
             plt.gca().invert_yaxis()
-            plt.savefig(os.path.join(tmp_folder, imagename))
+
+            image_name = os.path.basename(image_path)
+            plt.savefig(os.path.join(tmp_folder, image_name))
             plt.close("all")

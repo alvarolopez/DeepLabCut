@@ -19,6 +19,7 @@ import shutil
 import pandas as pd
 
 from deeplabcut import myconfig
+from deeplabcut import paths
 from deeplabcut import utils
 
 CONF = myconfig.CONF
@@ -42,6 +43,7 @@ def boxitintoacell(joints):
 
 
 def MakeTrain_pose_yaml(itemstochange, saveasfile, filename='pose_cfg.yaml'):
+    # FIXME: we need to change this!!
     filename = os.path.join(os.path.dirname(__file__), filename)
     raw = open(filename).read()
     docs = []
@@ -84,22 +86,18 @@ def generate_training_file_from_labelled_data():
     ####################################################
 
     task = CONF.data.task
-    frame_folder = os.path.join(CONF.data.base_directory, "frames", task)
-    label_folder = os.path.join(CONF.data.base_directory, "labels", task)
-    tmp_folder = os.path.join(CONF.data.base_directory, "tmp", task)
-
-    train_folder = os.path.join(CONF.data.base_directory, "train", task)
+    frame_folder = paths.frame_dir
+    label_folder = paths.label_dir
+    tmp_folder = paths.tmp_dir
+    train_folder = paths.train_dir
     utils.attempttomakefolder(train_folder)
 
     # Loading scorer's data:
-    filename = 'CollectedData_' + CONF.label.scorer + '.h5'
-    aux = os.path.join(label_folder, filename)
-    Data = pd.read_hdf(aux, 'df_with_missing')[CONF.label.scorer]
+    Data = pd.read_hdf(paths.get_collected_data_file(CONF.label.scorer),
+                       'df_with_missing')[CONF.label.scorer]
 
-    # Make that folder and put in the collecteddata (see below)
-    bf = "UnaugmentedDataSet_" + task + date + "/"
-    base_folder = os.path.join(train_folder, bf)
-    print(label_folder)
+    base_folder = paths.get_train_dataset_dir()
+    utils.attempttomakefolder(base_folder)
 
 #    # copy images and folder structure in the folder containing
 #    # training data comparison
@@ -111,11 +109,9 @@ def generate_training_file_from_labelled_data():
         for trainFraction in CONF.net.training_fraction:
             trainIndexes, testIndexes = SplitTrials(
                 range(len(Data.index)), trainFraction)
-            filename_matfile = task + "_" + CONF.label.scorer + str(int(
-                100 * trainFraction)) + "shuffle" + str(shuffle)
+            filename_matfile = paths.get_train_matfile(trainFraction, shuffle)
             # Filename for pickle file:
-            fn = os.path.join(base_folder, "Documentation_" + task + "_" + str(
-                int(trainFraction * 100)) + "shuffle" + str(shuffle))
+            docfile = paths.get_train_docfile(trainFraction, shuffle)
 
             ####################################################
             # Generating data structure with labeled information & frame
@@ -127,11 +123,8 @@ def generate_training_file_from_labelled_data():
             for jj in trainIndexes:
                 H = {}
                 # load image to get dimensions:
-                filename = Data.index[jj]
-                aux_path = os.path.relpath(filename, frame_folder)
-                H['image'] = os.path.abspath(os.path.join(base_folder,
-                                                          "frames",
-                                                          aux_path))
+                orig_filename = Data.index[jj]
+                H['image'] = paths.get_training_imagefile(orig_filename)
                 im = io.imread(H["image"])
 
                 if np.ndim(im) > 2:
@@ -169,7 +162,7 @@ def generate_training_file_from_labelled_data():
                 if np.size(joints) > 0:
                     data.append(H)
 
-            with open(fn + '.pickle', 'wb') as f:
+            with open(docfile, 'wb') as f:
                 # Pickle the 'data' dictionary using the highest protocol
                 # available.
                 pickle.dump([data, trainIndexes, testIndexes, trainFraction],
@@ -187,8 +180,7 @@ def generate_training_file_from_labelled_data():
                   boxitintoacell(data[item]['joints']))
                  for item in range(len(data))],
                 dtype=DTYPE)
-            sio.savemat(os.path.join(base_folder, filename_matfile + '.mat'),
-                        {'dataset': MatlabData})
+            sio.savemat(filename_matfile, {'dataset': MatlabData})
 
             ##################################################################
             # Creating file structure for training &
@@ -196,20 +188,15 @@ def generate_training_file_from_labelled_data():
             # testing information)
             ##################################################################
 
-            experimentname = task + date + '-trainset' + str(
-                int(trainFraction * 100)) + 'shuffle' + str(shuffle)
-
-            experiment_folder = os.path.join(train_folder, experimentname)
+            experiment_folder = paths.get_experiment_name(trainFraction, shuffle)
             utils.attempttomakefolder(experiment_folder)
             utils.attempttomakefolder(os.path.join(experiment_folder, 'train'))
             utils.attempttomakefolder(os.path.join(experiment_folder, 'test'))
 
             items2change = {
-                "dataset": os.path.abspath(
-                    os.path.join(base_folder,
-                                 filename_matfile + '.mat')
-                ),
+                "dataset": filename_matfile,
                 "num_joints": len(CONF.dataframe.bodyparts),
+                "init_weights": paths.get_pre_trained_file(),
                 "all_joints": [
                     [i] for i in range(len(CONF.dataframe.bodyparts))
                 ],
@@ -218,14 +205,16 @@ def generate_training_file_from_labelled_data():
 
             trainingdata = MakeTrain_pose_yaml(
                 items2change,
-                os.path.join(experiment_folder, 'train', 'pose_cfg.yaml'),
-                filename='pose_cfg.yaml')
+                paths.get_pose_cfg_train(trainFraction, shuffle),
+                filename="pose_cfg.yaml"
+            )
             keys2save = [
                 "dataset", "num_joints", "all_joints", "all_joints_names",
                 "net_type", 'init_weights', 'global_scale',
                 'location_refinement', 'locref_stdev'
             ]
-            MakeTest_pose_yaml(trainingdata, keys2save,
-                               os.path.join(experiment_folder,
-                                            'test',
-                                            'pose_cfg.yaml'))
+            MakeTest_pose_yaml(
+                trainingdata,
+                keys2save,
+                paths.get_pose_cfg_test(trainFraction, shuffle)
+            )

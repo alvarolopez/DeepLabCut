@@ -18,6 +18,7 @@ from skimage.util import img_as_ubyte
 import numpy as np
 
 from deeplabcut import myconfig
+from deeplabcut import paths
 from deeplabcut import utils
 
 CONF = myconfig.CONF
@@ -42,7 +43,7 @@ def select_random_frames(task=CONF.data.task):
     """
 
     task = CONF.data.task
-    frame_folder = os.path.join(CONF.data.base_directory, "frames", task)
+    frame_folder = paths.frame_dir
     utils.attempttomakefolder(frame_folder)
 
     #####################################################################
@@ -52,10 +53,7 @@ def select_random_frames(task=CONF.data.task):
     # Number of frames to pick (set this to 0 until you found right cropping)
     numframes2pick = 10
 
-    video_file = os.path.join(CONF.data.base_directory,
-                              "raw",
-                              CONF.data.task,
-                              CONF.data.video_file)
+    video_file = paths.get_raw_video_file()
     clip = VideoFileClip(video_file)
     print("Duration of video [s], ", clip.duration, "fps, ", clip.fps,
           "Cropped frame dimensions: ", clip.size)
@@ -89,7 +87,7 @@ def select_random_frames(task=CONF.data.task):
     ####################################################
 
     print("Videoname: ", CONF.data.video_file)
-    folder = os.path.join(frame_folder, CONF.data.video_file.split('.')[0])
+    folder = paths.get_video_frames_dir()
     print(folder)
     utils.attempttomakefolder(folder)
 

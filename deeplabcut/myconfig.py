@@ -301,6 +301,10 @@ analysis_opts = [
         "store-as-csv",
         default=False,
     ),
+    cfg.BoolOpt(
+        "delete-individual-frames",
+        default=False,
+    ),
 ]
 
 CONF.register_opts(analysis_opts, group="analysis")

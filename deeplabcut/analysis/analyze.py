@@ -19,7 +19,6 @@ CUDA_VISIBLE_DEVICES=0 python3 AnalyzeVideos.py
 ####################################################
 
 import os
-import os.path
 import pickle
 
 # Deep-cut dependencies
@@ -37,6 +36,8 @@ import numpy as np
 from tqdm import tqdm
 
 from deeplabcut import myconfig
+from deeplabcut import paths
+from deeplabcut import utils
 
 CONF = myconfig.CONF
 
@@ -53,85 +54,70 @@ def getpose(image, cfg, sess, inputs, outputs, outall=False):
         return pose
 
 
-def main():
+def main(videofolder=None):
     ####################################################
     # Loading data, and defining model folder
     ####################################################
-    base_folder = os.path.join(CONF.data.base_directory,
-                               "train",
-                               CONF.data.task)
-    experimentname = (
-        CONF.data.task + CONF.net.date + '-trainset' +
-        str(int(CONF.analysis.trainings_fraction * 100)) +
-        'shuffle' + str(CONF.analysis.shuffle_index)
-    )
-    modelfolder = os.path.join(base_folder, experimentname)
-    print(modelfolder)
-    cfg = load_config(os.path.join(base_folder,
-                                   experimentname,
-                                   'test',
-                                   "pose_cfg.yaml"))
+    modelfolder = paths.get_experiment_name(CONF.analysis.trainings_fraction,
+                                            CONF.analysis.shuffle_index)
+
+    cfg = load_config(paths.get_pose_cfg_test(CONF.analysis.trainings_fraction,
+                                              CONF.analysis.shuffle_index))
 
     ##################################################
     # Load and setup CNN part detector
     ##################################################
 
-    # Check which snapshots are available and sort them by # iterations
-    Snapshots = np.array([
-        fn.split('.')[0]
-        for fn in os.listdir(os.path.join(modelfolder, 'train'))
-        if "index" in fn
-    ])
-    increasing_indices = np.argsort([int(m.split('-')[1]) for m in Snapshots])
+    # Check which snap shots are available and sort them by # iterations
+    Snapshots = np.array(
+        paths.get_train_snapshots(CONF.analysis.trainings_fraction,
+                                  CONF.analysis.shuffle_index)
+    )
+    increasing_indices = np.argsort(
+        [int(m.rsplit('-', 1)[1]) for m in Snapshots]
+    )
     Snapshots = Snapshots[increasing_indices]
-
-    print(modelfolder)
-    print(Snapshots)
 
     ##################################################
     # Compute predictions over images
     ##################################################
 
     # Check if data already was generated:
-    cfg['init_weights'] = os.path.join(modelfolder,
-                                       'train',
-                                       Snapshots[CONF.analysis.snapshot_index])
+    cfg['init_weights'] = Snapshots[CONF.analysis.snapshot_index]
 
     # Name for scorer:
-    trainingsiterations = (cfg['init_weights'].split('/')[-1]).split('-')[-1]
+    trainingsiterations = cfg['init_weights'].rsplit('-', 1)[-1]
 
     # Name for scorer based on passed on parameters from myconfig_analysis.
     # Make sure they refer to the network of interest.
-    scorer = ('DeepCut' + "_resnet" + str(CONF.net.resnet) + "_" +
-              CONF.data.task + str(CONF.net.date) + 'shuffle' +
-              str(CONF.analysis.shuffle_index) + '_' +
-              str(trainingsiterations))
+    scorer = paths.get_scorer_name(CONF.net.resnet,
+                                   CONF.analysis.trainings_fraction,
+                                   CONF.analysis.shuffle_index,
+                                   trainings_iterations)
 
-    cfg['init_weights'] = os.path.join(modelfolder,
-                                       'train',
-                                       Snapshots[CONF.analysis.snapshot_index])
     sess, inputs, outputs = predict.setup_pose_prediction(cfg)
     pdindex = pd.MultiIndex.from_product(
         [[scorer], cfg['all_joints_names'], ['x', 'y', 'likelihood']],
         names=['scorer', 'bodyparts', 'coords'])
 
     frame_buffer = 10
-    videofolder = CONF.analysis.video_directory
-    videotype = CONF.analysis.video_type
 
-    videos = np.sort([fn for fn in os.listdir(videofolder)
-                      if (videotype in fn)])
-    print("Starting ", videofolder, videos)
+    if videofolder is None:
+        videofolder = paths.video_dir
+
+    videos = paths.get_videos(videofolder)
+    print("Starting ", videos)
     for video in videos:
-        dataname = video.split('.')[0] + scorer + '.h5'
-        dataname = os.path.join(videofolder, dataname)
+        outdir = paths.get_video_outdir(video)
+        utils.attempttomakefolder(outdir)
+        dataname = paths.get_video_dataname(video, scorer)
         try:
             # Attempt to load data...
             pd.read_hdf(dataname)
             print("Video already analyzed!", dataname)
         except FileNotFoundError:
             print("Loading ", video)
-            clip = VideoFileClip(os.path.join(videofolder, video))
+            clip = VideoFileClip(video)
             ny, nx = clip.size  # dimensions of frame (height, width)
             fps = clip.fps
             # this is slow (but accurate)

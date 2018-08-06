@@ -18,6 +18,7 @@ Script called from Step1_EvaluateModelonDataset.py
 import os
 
 from deeplabcut import myconfig
+from deeplabcut import paths
 from deeplabcut import utils
 
 # Deep-cut dependencies
@@ -46,72 +47,51 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
     base_folder = os.path.join(CONF.data.base_directory,
                                "train",
                                CONF.data.task)
-    folder = os.path.join(
-        base_folder,
-        'UnaugmentedDataSet_' + CONF.data.task + CONF.net.date)
+    training_folder = paths.get_train_dataset_dir()
 
-    datafile = (
-        'Documentation_' + CONF.data.task + '_' +
-        str(int(CONF.net.training_fraction[train_fraction_index] * 100)) +
-        'shuffle' + str(int(CONF.net.shuffles[shuffle_index])) + '.pickle')
+    datafile = paths.get_train_docfile(trainFraction, shuffle)
 
-    print(folder)
     # loading meta data / i.e. training & test files & labels
-    with open(os.path.join(folder, datafile), 'rb') as f:
+    with open(datafile, 'rb') as f:
         data, trainIndices, testIndices, __ignore__ = pickle.load(f)
 
-    Data = pd.read_hdf(
-        os.path.join(folder,
-                     "labels",
-                     'CollectedData_' + CONF.label.scorer + '.h5'),
-        'df_with_missing')
+    Data = pd.read_hdf(paths.get_collected_data_file(CONF.label.scorer),
+                       'df_with_missing')
 
     #######################################################################
     # Load and setup CNN part detector as well as its configuration
     #######################################################################
 
-    experimentname = (CONF.data.task + CONF.net.date + '-trainset' +
-                      str(int(trainFraction * 100)) + 'shuffle' + str(shuffle))
-    cfg = load_config(os.path.join(base_folder,
-                                   experimentname,
-                                   'test',
-                                   "pose_cfg.yaml"))
-    modelfolder = os.path.join(base_folder, experimentname)
+    cfg = load_config(paths.get_pose_cfg_test(trainFraction, shuffle))
+    modelfolder = paths.get_experiment_name(trainFraction, shuffle)
+    Snapshots = np.array(paths.get_train_snapshots(trainFraction, shuffle))
 
-    Snapshots = np.array([
-        fn.split('.')[0]
-        for fn in os.listdir(os.path.join(base_folder,
-                                          experimentname,
-                                          'train'))
-        if "index" in fn
-    ])
-    increasing_indices = np.argsort([int(m.split('-')[1]) for m in Snapshots])
+    increasing_indices = np.argsort([int(m.rsplit('-', 1)[1]) for m in Snapshots])
     Snapshots = Snapshots[increasing_indices]
 
-    cfg['init_weights'] = os.path.join(modelfolder,
-                                       'train',
-                                       Snapshots[snapshot_index])
-    trainingsiterations = cfg['init_weights'].split('/')[-1].split('-')[-1]
-    DLCscorer = (
-        'DeepCut' + "_" + str(cfg["net_type"]) + "_" +
-        str(int(trainFraction * 100)) + 'shuffle' + str(shuffle) +
-        '_' + str(trainingsiterations) + "forTask_" + CONF.data.task)
-
+    cfg['init_weights'] = Snapshots[snapshot_index]
+    trainingsiterations = cfg['init_weights'].rsplit('-')[-1]
+    DLCscorer = paths.get_scorer_name(cfg["net_type"],
+                                      trainFraction,
+                                      shuffle,
+                                      trainingsiterations)
     print("Running ", DLCscorer,
           " with # of trainingiterations:", trainingsiterations)
 
-    results_dir = os.path.join(CONF.data.base_directory, "results")
+    results_dir = paths.results_dir
+    utils.attempttomakefolder(results_dir)
+    results_file = paths.get_scorer_file(cfg["net_type"],
+                                         trainFraction,
+                                         shuffle,
+                                         trainingsiterations)
 
     try:
-        Data = pd.read_hdf(os.path.join(results_dir,
-                                        DLCscorer + '.h5'),
+        Data = pd.read_hdf(results_file,
                            'df_with_missing')
         print("This net has already been evaluated!")
     except FileNotFoundError:
         # Specifying state of model (snapshot / training state)
-        cfg['init_weights'] = os.path.join(modelfolder,
-                                           'train',
-                                           Snapshots[snapshot_index])
+        cfg['init_weights'] = Snapshots[snapshot_index]
         sess, inputs, outputs = predict.setup_pose_prediction(cfg)
 
         Numimages = len(Data.index)
@@ -123,17 +103,10 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
         # Compute predictions over images
         ##################################################
 
-        frame_folder = os.path.join(CONF.data.base_directory,
-                                    "frames",
-                                    CONF.data.task)
-
         for imageindex, imagename in tqdm(enumerate(Data.index)):
-            aux_path = os.path.relpath(imagename, frame_folder)
-            aux_path = os.path.abspath(os.path.join(folder,
-                                                    "frames",
-                                                    aux_path))
+            image_path = paths.get_training_imagefile(imagename)
 
-            image = io.imread(aux_path, mode='RGB')
+            image = io.imread(image_path, mode='RGB')
             image = skimage.color.gray2rgb(image)
             image_batch = data_to_input(image)
             # Compute prediction with the CNN
@@ -151,13 +124,12 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
             [[DLCscorer], cfg['all_joints_names'], ['x', 'y', 'likelihood']],
             names=['scorer', 'bodyparts', 'coords'])
 
-        # Saving results:
-        utils.attempttomakefolder(results_dir)
 
+        # Saving results:
         DataMachine = pd.DataFrame(
-            PredicteData, columns=index, index=Data.index.values)
-        DataMachine.to_hdf(os.path.join(results_dir,
-                                        DLCscorer + '.h5'),
+            PredicteData, columns=index, index=Data.index.values
+        )
+        DataMachine.to_hdf(results_file,
                            'df_with_missing',
                            format='table',
                            mode='w')

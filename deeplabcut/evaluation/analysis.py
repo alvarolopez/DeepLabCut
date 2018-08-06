@@ -26,6 +26,7 @@ import pandas as pd
 
 # from deeplabcut import utils
 from deeplabcut import myconfig
+from deeplabcut import paths
 
 CONF = myconfig.CONF
 
@@ -124,19 +125,10 @@ def main():
     ####################################################
 
     # loading meta data / i.e. training & test files
-    base_folder = os.path.join(CONF.data.base_directory,
-                               "train", CONF.data.task)
-    folder = os.path.join(
-        base_folder,
-        'UnaugmentedDataSet_' + CONF.data.task + CONF.net.date)
+    training_folder = paths.get_train_dataset_dir()
 
-    Data = pd.read_hdf(
-        os.path.join(
-            folder,
-            'labels',
-            'CollectedData_' + CONF.label.scorer + '.h5'),
-        'df_with_missing'
-    )
+    Data = pd.read_hdf(paths.get_collected_data_file(CONF.label.scorer),
+                       'df_with_missing')
 
     ####################################################
     # Models vs. benchmark for varying training state
@@ -149,23 +141,13 @@ def main():
 #    if CONF.evaluation.plotting:
 #        colors = get_cmap(len(comparisonbodyparts))
 
-    results_dir = os.path.join(CONF.data.base_directory, "results")
+    results_dir = paths.results_dir
     for trainFraction in CONF.net.training_fraction:
         for shuffle in CONF.net.shuffles:
 
-            fns = [
-                f for f in os.listdir(results_dir)
-                if "forTask_" + str(CONF.data.task) in f and
-                   "shuffle" + str(shuffle) in f and
-                   "_" + str(int(trainFraction * 100)) in f
-            ]
+            fns = paths.get_evaluation_files(trainFraction, shuffle)
+            metadatafile = paths.get_train_docfile(trainFraction, shuffle)
 
-            metadatafile = os.path.join(
-                folder,
-                "Documentation_" + CONF.data.task + "_" + str(
-                    int(trainFraction * 100)
-                ) + "shuffle" + str(shuffle) + ".pickle"
-            )
             with open(metadatafile, 'rb') as f:
                 (trainingdata_details, trainIndexes, testIndexes,
                  testFraction_data) = pickle.load(f)
