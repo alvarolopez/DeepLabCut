@@ -16,19 +16,13 @@ import os
 import yaml
 import pickle
 import shutil
-import sys
 import pandas as pd
-
-import pickle
-import shutil
-import yaml
-
-import scipy.io as sio
 
 from deeplabcut import myconfig
 from deeplabcut import utils
 
 CONF = myconfig.CONF
+
 
 def SplitTrials(trialindex, trainFraction=0.8):
     ''' Split a trial index into train and test sets'''
@@ -77,9 +71,10 @@ def MakeTest_pose_yaml(dictionary, keys2save, saveasfile):
 
 def generate_training_file_from_labelled_data():
     """
-    This script generates the training data information for DeepCut (which requires a mat file)
-    based on the pandas dataframes that hold label information. The user can set the fraction of
-    the traing set size (from all labeled image in the hd5 file) and can create multiple shuffles.
+    This script generates the training data information for DeepCut (which
+    requires a mat file) based on the pandas dataframes that hold label
+    information. The user can set the fraction of the traing set size (from all
+    labeled image in the hd5 file) and can create multiple shuffles.
     """
 
     date = CONF.net.date
@@ -123,7 +118,8 @@ def generate_training_file_from_labelled_data():
                 int(trainFraction * 100)) + "shuffle" + str(shuffle))
 
             ####################################################
-            # Generating data structure with labeled information & frame metadata (for deep cut)
+            # Generating data structure with labeled information & frame
+            # metadata (for deep cut)
             ####################################################
 
             # Make matlab train file!
@@ -133,10 +129,12 @@ def generate_training_file_from_labelled_data():
                 # load image to get dimensions:
                 filename = Data.index[jj]
                 aux_path = os.path.relpath(filename, frame_folder)
-                H['image'] = os.path.abspath(os.path.join(base_folder, "frames", aux_path))
+                H['image'] = os.path.abspath(os.path.join(base_folder,
+                                                          "frames",
+                                                          aux_path))
                 im = io.imread(H["image"])
 
-                if np.ndim(im)>2:
+                if np.ndim(im) > 2:
                     H['size'] = np.array(
                         [np.shape(im)[2],
                          np.shape(im)[0],
@@ -145,37 +143,42 @@ def generate_training_file_from_labelled_data():
                     # print "Grayscale!"
                     H['size'] = np.array([1, np.shape(im)[0], np.shape(im)[1]])
 
-                indexjoints=0
-                joints=np.zeros((len(CONF.dataframe.bodyparts),3))*np.nan
-                for bpindex,bodypart in enumerate(CONF.dataframe.bodyparts):
-                    if Data[bodypart]['x'][jj]<np.shape(im)[1] and Data[bodypart]['y'][jj]<np.shape(im)[0]: #are labels in image?
-                            joints[indexjoints,0]=int(bpindex)
-                            joints[indexjoints,1]=Data[bodypart]['x'][jj]
-                            joints[indexjoints,2]=Data[bodypart]['y'][jj]
-                            indexjoints+=1
+                indexjoints = 0
+                joints = np.zeros((len(CONF.dataframe.bodyparts), 3)) * np.nan
+                for bpindex, bodypart in enumerate(CONF.dataframe.bodyparts):
+                    # are labels in image?
+                    if (Data[bodypart]['x'][jj] < np.shape(im)[1] and
+                            Data[bodypart]['y'][jj] < np.shape(im)[0]):
+                        joints[indexjoints, 0] = int(bpindex)
+                        joints[indexjoints, 1] = Data[bodypart]['x'][jj]
+                        joints[indexjoints, 2] = Data[bodypart]['y'][jj]
+                        indexjoints += 1
 
+                # drop NaN, i.e. lines for missing body parts
                 joints = joints[np.where(
                     np.prod(np.isfinite(joints),
-                            1))[0], :]  # drop NaN, i.e. lines for missing body parts
+                            1))[0], :]
 
-                assert (np.prod(np.array(joints[:, 2]) < np.shape(im)[0])
-                        )  # y coordinate within!
-                assert (np.prod(np.array(joints[:, 1]) < np.shape(im)[1])
-                        )  # x coordinate within!
+                # y coordinate within!
+                assert (np.prod(np.array(joints[:, 2]) < np.shape(im)[0]))
+                # x coordinate within!
+                assert (np.prod(np.array(joints[:, 1]) < np.shape(im)[1]))
 
                 H['joints'] = np.array(joints, dtype=int)
-                if np.size(joints)>0: #exclude images without labels
-                        data.append(H)
-
+                # exclude images without labels
+                if np.size(joints) > 0:
+                    data.append(H)
 
             with open(fn + '.pickle', 'wb') as f:
-                # Pickle the 'data' dictionary using the highest protocol available.
-                pickle.dump([data, trainIndexes, testIndexes, trainFraction], f,
+                # Pickle the 'data' dictionary using the highest protocol
+                # available.
+                pickle.dump([data, trainIndexes, testIndexes, trainFraction],
+                            f,
                             pickle.HIGHEST_PROTOCOL)
 
-            ################################################################################
+            ###################################################################
             # Convert to idosyncratic training file for deeper cut (*.mat)
-            ################################################################################
+            ###################################################################
 
             DTYPE = [('image', 'O'), ('size', 'O'), ('joints', 'O')]
             MatlabData = np.array(
@@ -184,12 +187,14 @@ def generate_training_file_from_labelled_data():
                   boxitintoacell(data[item]['joints']))
                  for item in range(len(data))],
                 dtype=DTYPE)
-            sio.savemat(os.path.join(base_folder, filename_matfile + '.mat'), {'dataset': MatlabData})
+            sio.savemat(os.path.join(base_folder, filename_matfile + '.mat'),
+                        {'dataset': MatlabData})
 
-            ################################################################################
+            ##################################################################
             # Creating file structure for training &
-            # Test files as well as pose_yaml files (containing training and testing information)
-            #################################################################################
+            # Test files as well as pose_yaml files (containing training and
+            # testing information)
+            ##################################################################
 
             experimentname = task + date + '-trainset' + str(
                 int(trainFraction * 100)) + 'shuffle' + str(shuffle)
@@ -200,9 +205,14 @@ def generate_training_file_from_labelled_data():
             utils.attempttomakefolder(os.path.join(experiment_folder, 'test'))
 
             items2change = {
-                "dataset": os.path.abspath(os.path.join(base_folder, filename_matfile + '.mat')),
+                "dataset": os.path.abspath(
+                    os.path.join(base_folder,
+                                 filename_matfile + '.mat')
+                ),
                 "num_joints": len(CONF.dataframe.bodyparts),
-                "all_joints": [[i] for i in range(len(CONF.dataframe.bodyparts))],
+                "all_joints": [
+                    [i] for i in range(len(CONF.dataframe.bodyparts))
+                ],
                 "all_joints_names": CONF.dataframe.bodyparts
             }
 
@@ -212,8 +222,10 @@ def generate_training_file_from_labelled_data():
                 filename='pose_cfg.yaml')
             keys2save = [
                 "dataset", "num_joints", "all_joints", "all_joints_names",
-                "net_type", 'init_weights', 'global_scale', 'location_refinement',
-                'locref_stdev'
+                "net_type", 'init_weights', 'global_scale',
+                'location_refinement', 'locref_stdev'
             ]
             MakeTest_pose_yaml(trainingdata, keys2save,
-                               os.path.join(experiment_folder, 'test', 'pose_cfg.yaml'))
+                               os.path.join(experiment_folder,
+                                            'test',
+                                            'pose_cfg.yaml'))
