@@ -83,10 +83,10 @@ def generate_training_file_from_labelled_data():
     # Definitions (Folders, data source and labels)
     ####################################################
 
-    frame_folder = paths.frame_dir
-    label_folder = paths.label_dir
-    tmp_folder = paths.tmp_dir
-    train_folder = paths.train_dir
+    frame_folder = paths.get_frame_dir()
+    label_folder = paths.get_label_dir()
+    tmp_folder = paths.get_tmp_dir()
+    train_folder = paths.get_train_dir()
     utils.attempttomakefolder(train_folder)
 
     # Loading scorer's data:
@@ -216,3 +216,12 @@ def generate_training_file_from_labelled_data():
                 keys2save,
                 paths.get_pose_cfg_test(trainFraction, shuffle)
             )
+
+
+def main():
+    myconfig.parse_args()
+    return generate_training_file_from_labelled_data()
+
+
+if __name__ == "__main__":
+    main()

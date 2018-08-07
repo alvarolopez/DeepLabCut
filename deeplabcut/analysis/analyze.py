@@ -54,6 +54,8 @@ def getpose(image, cfg, sess, inputs, outputs, outall=False):
 
 
 def main(videofolder=None):
+    myconfig.parse_args()
+
     ####################################################
     # Loading data, and defining model folder
     ####################################################
@@ -100,7 +102,7 @@ def main(videofolder=None):
     frame_buffer = 10
 
     if videofolder is None:
-        videofolder = paths.video_dir
+        videofolder = paths.get_video_dir()
 
     videos = paths.get_videos(videofolder)
     print("Starting ", videos)
@@ -196,3 +198,7 @@ def main(videofolder=None):
             with open(dataname.split('.')[0] + 'includingmetadata.pickle',
                       'wb') as f:
                 pickle.dump(metadata, f, pickle.HIGHEST_PROTOCOL)
+
+
+if __name__ == "__main__":
+    main()

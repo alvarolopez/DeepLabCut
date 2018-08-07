@@ -41,7 +41,7 @@ def convert_labels_to_data_frame():
     different file e.g.  ImageJ / Fiji
     """
 
-    label_folder = paths.label_dir
+    label_folder = paths.get_label_dir()
 
     ###################################################
     # Code if all bodyparts (per folder are shared in one file)

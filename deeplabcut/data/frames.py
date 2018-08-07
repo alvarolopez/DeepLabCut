@@ -42,7 +42,7 @@ def select_random_frames(task=CONF.data.task):
     frames, to remove unnecessary parts of the video as much as possible.
     """
 
-    frame_folder = paths.frame_dir
+    frame_folder = paths.get_frame_dir()
     utils.attempttomakefolder(frame_folder)
 
     #####################################################################
@@ -111,3 +111,12 @@ def select_random_frames(task=CONF.data.task):
     image = img_as_ubyte(clip.get_frame(index * 1. / clip.fps))
     imgname = os.path.join(folder, "img" + str(index).zfill(width) + ".png")
     io.imsave(imgname, image)
+
+
+def main():
+    myconfig.parse_args()
+    return select_random_frames()
+
+
+if __name__ == "__main__":
+    main()

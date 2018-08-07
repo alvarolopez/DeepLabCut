@@ -1,5 +1,7 @@
 # coding: utf-8
 
+import sys
+
 from oslo_config import cfg
 
 CONF = cfg.CONF
@@ -292,3 +294,9 @@ Fraction of labeled images used for training
 ]
 
 CONF.register_opts(analysis_opts, group="analysis")
+
+
+def parse_args(argv=sys.argv, default_config_files=None):
+    CONF(argv[1:],
+         project='dlc',
+         default_config_files=default_config_files)

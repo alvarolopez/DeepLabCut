@@ -125,6 +125,7 @@ def CreateVideo(clip, Dataframe, outdir, tmpfolder, vname):
 
 
 def main(videofolder=None):
+    myconfig.parse_args()
 
     # Name for scorer based on passed on parameters from myconfig_analysis.
     # Make sure they refer to the network of interest.
@@ -138,7 +139,7 @@ def main(videofolder=None):
     ##################################################
 
     if videofolder is None:
-        videofolder = paths.video_dir
+        videofolder = paths.get_video_dir()
 
     videos = paths.get_videos(videofolder)
     print("Starting ", videos)
@@ -184,3 +185,7 @@ def main(videofolder=None):
             finally:
                 if CONF.analysis.delete_individual_frames:
                     shutil.rmtree(tmpfolder, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -119,6 +119,8 @@ def pairwisedistances(DataCombined, DataMachine,
 
 
 def main():
+    myconfig.parse_args()
+
     # fs = 15  # fontsize for plots
     ####################################################
     # Loading dependencies
@@ -139,7 +141,7 @@ def main():
 #    if CONF.evaluation.plotting:
 #        colors = get_cmap(len(comparisonbodyparts))
 
-    results_dir = paths.results_dir
+    results_dir = paths.get_results_dir()
     for trainFraction in CONF.net.training_fraction:
         for shuffle in CONF.net.shuffles:
 
@@ -235,3 +237,7 @@ def main():
 #                     else:
 #                         plt.savefig(os.path.join(foldername,'TestImg'+str(ind)+'_'+fn.split('/')[0]+'_'+fn.split('/')[1]))
 #                     plt.close("all")
+
+
+if __name__ == "__main__":
+    main()

@@ -71,7 +71,7 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
     print("Running ", DLCscorer,
           " with # of trainingiterations:", trainingsiterations)
 
-    results_dir = paths.results_dir
+    results_dir = paths.get_results_dir()
     utils.attempttomakefolder(results_dir)
     results_file = paths.get_scorer_file(cfg["net_type"],
                                          trainFraction,
