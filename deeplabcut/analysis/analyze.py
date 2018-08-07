@@ -18,7 +18,6 @@ CUDA_VISIBLE_DEVICES=0 python3 AnalyzeVideos.py
 # Dependencies
 ####################################################
 
-import os
 import pickle
 
 # Deep-cut dependencies
@@ -58,8 +57,6 @@ def main(videofolder=None):
     ####################################################
     # Loading data, and defining model folder
     ####################################################
-    modelfolder = paths.get_experiment_name(CONF.analysis.trainings_fraction,
-                                            CONF.analysis.shuffle_index)
 
     cfg = load_config(paths.get_pose_cfg_test(CONF.analysis.trainings_fraction,
                                               CONF.analysis.shuffle_index))
@@ -93,7 +90,7 @@ def main(videofolder=None):
     scorer = paths.get_scorer_name(CONF.net.resnet,
                                    CONF.analysis.trainings_fraction,
                                    CONF.analysis.shuffle_index,
-                                   trainings_iterations)
+                                   trainingsiterations)
 
     sess, inputs, outputs = predict.setup_pose_prediction(cfg)
     pdindex = pd.MultiIndex.from_product(

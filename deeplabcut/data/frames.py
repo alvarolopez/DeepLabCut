@@ -42,7 +42,6 @@ def select_random_frames(task=CONF.data.task):
     frames, to remove unnecessary parts of the video as much as possible.
     """
 
-    task = CONF.data.task
     frame_folder = paths.frame_dir
     utils.attempttomakefolder(frame_folder)
 

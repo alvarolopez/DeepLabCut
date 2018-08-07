@@ -20,7 +20,6 @@ import os
 
 from moviepy.editor import VideoFileClip
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -30,6 +29,7 @@ from deeplabcut import myconfig
 from deeplabcut import paths
 from deeplabcut import utils
 
+matplotlib.use('Agg')
 CONF = myconfig.CONF
 
 
@@ -41,7 +41,6 @@ def convert_labels_to_data_frame():
     different file e.g.  ImageJ / Fiji
     """
 
-    frame_folder = paths.frame_dir
     label_folder = paths.label_dir
 
     ###################################################
@@ -206,9 +205,6 @@ def check_labels():
     print(num_joints)
     print(all_joints)
     print(all_joints_names)
-
-    frame_folder = paths.frame_dir
-    label_folder = paths.label_dir
 
     # Data frame to hold data of all data sets for different scorers, bodyparts
     # and images

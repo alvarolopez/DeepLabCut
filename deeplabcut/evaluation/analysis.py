@@ -125,8 +125,6 @@ def main():
     ####################################################
 
     # loading meta data / i.e. training & test files
-    training_folder = paths.get_train_dataset_dir()
-
     Data = pd.read_hdf(paths.get_collected_data_file(CONF.label.scorer),
                        'df_with_missing')
 

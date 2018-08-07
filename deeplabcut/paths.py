@@ -65,8 +65,8 @@ def get_train_matfile(train_fraction, shuffle):
     return os.path.join(
         get_train_dataset_dir(),
         CONF.data.task + "_" + CONF.label.scorer +
-            str(int(100 * train_fraction)) + "shuffle" + str(shuffle) +
-            ".mat"
+        str(int(100 * train_fraction)) + "shuffle" + str(shuffle) +
+        ".mat"
     )
 
 
@@ -74,21 +74,23 @@ def get_train_docfile(train_fraction, shuffle):
     return os.path.join(
         get_train_dataset_dir(),
         "Documentation_" + CONF.data.task + "_" +
-            str(int(train_fraction * 100)) + "shuffle" + str(shuffle) +
-            ".pickle"
+        str(int(train_fraction * 100)) + "shuffle" + str(shuffle) +
+        ".pickle"
     )
 
 
 def get_training_imagefile(filename):
     aux_path = os.path.relpath(filename, frame_dir)
-    return os.path.abspath(os.path.join(get_train_dataset_dir(), "frames", aux_path))
+    return os.path.abspath(os.path.join(get_train_dataset_dir(),
+                                        "frames",
+                                        aux_path))
 
 
 def get_experiment_name(train_fraction, shuffle):
     return os.path.join(
         train_dir,
         CONF.data.task + CONF.net.date + '-trainset' +
-            str(int(train_fraction * 100)) + 'shuffle' + str(shuffle)
+        str(int(train_fraction * 100)) + 'shuffle' + str(shuffle)
     )
 
 
@@ -117,7 +119,8 @@ def get_train_snapshots(trainFraction, shuffle):
 def get_scorer_name(net_type, train_fraction, shuffle, iters):
     return ('DeepCut' + "_resnet" + str(net_type) + "_" +
             str(int(train_fraction * 100)) + 'shuffle' + str(shuffle) +
-            '_' + str(iters) + "forTask_" + CONF.data.task + str(CONF.net.date))
+            '_' + str(iters) + "forTask_" + CONF.data.task +
+            str(CONF.net.date))
 
 
 def get_scorer_file(net_type, train_fraction, shuffle, iters):

@@ -15,8 +15,6 @@ Script called from Step1_EvaluateModelonDataset.py
 # Dependencies
 ####################################################
 
-import os
-
 from deeplabcut import myconfig
 from deeplabcut import paths
 from deeplabcut import utils
@@ -44,11 +42,6 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
     shuffle = CONF.net.shuffles[shuffle_index]
     trainFraction = CONF.net.training_fraction[train_fraction_index]
 
-    base_folder = os.path.join(CONF.data.base_directory,
-                               "train",
-                               CONF.data.task)
-    training_folder = paths.get_train_dataset_dir()
-
     datafile = paths.get_train_docfile(trainFraction, shuffle)
 
     # loading meta data / i.e. training & test files & labels
@@ -63,10 +56,10 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
     #######################################################################
 
     cfg = load_config(paths.get_pose_cfg_test(trainFraction, shuffle))
-    modelfolder = paths.get_experiment_name(trainFraction, shuffle)
     Snapshots = np.array(paths.get_train_snapshots(trainFraction, shuffle))
 
-    increasing_indices = np.argsort([int(m.rsplit('-', 1)[1]) for m in Snapshots])
+    increasing_indices = np.argsort([int(m.rsplit('-', 1)[1])
+                                     for m in Snapshots])
     Snapshots = Snapshots[increasing_indices]
 
     cfg['init_weights'] = Snapshots[snapshot_index]
@@ -123,7 +116,6 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
         index = pd.MultiIndex.from_product(
             [[DLCscorer], cfg['all_joints_names'], ['x', 'y', 'likelihood']],
             names=['scorer', 'bodyparts', 'coords'])
-
 
         # Saving results:
         DataMachine = pd.DataFrame(

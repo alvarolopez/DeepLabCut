@@ -17,8 +17,6 @@ CUDA_VISIBLE_DEVICES=0 python3 Step1_EvaluateModelonDataset.py
 # Dependencies
 ####################################################
 
-import os
-
 from deeplabcut import myconfig
 from deeplabcut import paths
 import numpy as np
@@ -36,8 +34,6 @@ def main():
     # Loading data and evaluating network on data
     ####################################################
 
-    base_folder = paths.base_dir
-
     for shuffleIndex, shuffle in enumerate(CONF.net.shuffles):
         for (trainFractionIndex,
              trainFraction) in enumerate(CONF.net.training_fraction):
@@ -46,7 +42,6 @@ def main():
             # split).
             ###################################################################
 
-            modelfolder = paths.get_experiment_name(trainFraction, shuffle)
             cfg = load_config(paths.get_pose_cfg_test(trainFraction, shuffle))
 
             # Check which snap shots are available and sort them by #

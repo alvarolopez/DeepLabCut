@@ -79,13 +79,10 @@ def generate_training_file_from_labelled_data():
     labeled image in the hd5 file) and can create multiple shuffles.
     """
 
-    date = CONF.net.date
-
     ####################################################
     # Definitions (Folders, data source and labels)
     ####################################################
 
-    task = CONF.data.task
     frame_folder = paths.frame_dir
     label_folder = paths.label_dir
     tmp_folder = paths.tmp_dir
@@ -188,7 +185,8 @@ def generate_training_file_from_labelled_data():
             # testing information)
             ##################################################################
 
-            experiment_folder = paths.get_experiment_name(trainFraction, shuffle)
+            experiment_folder = paths.get_experiment_name(trainFraction,
+                                                          shuffle)
             utils.attempttomakefolder(experiment_folder)
             utils.attempttomakefolder(os.path.join(experiment_folder, 'train'))
             utils.attempttomakefolder(os.path.join(experiment_folder, 'test'))

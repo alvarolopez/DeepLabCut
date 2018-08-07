@@ -34,7 +34,6 @@ import tempfile
 
 from deeplabcut import myconfig
 from deeplabcut import paths
-from deeplabcut import utils
 
 CONF = myconfig.CONF
 
