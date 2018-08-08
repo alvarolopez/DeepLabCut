@@ -25,7 +25,7 @@ from deeplabcut import utils
 CONF = myconfig.CONF
 
 
-def SplitTrials(trialindex, trainFraction=0.8):
+def split_trials(trialindex, trainFraction=0.8):
     ''' Split a trial index into train and test sets'''
     trainsize = int(len(trialindex) * trainFraction)
     shuffle = np.random.permutation(trialindex)
@@ -42,7 +42,7 @@ def boxitintoacell(joints):
     return outer
 
 
-def MakeTrain_pose_yaml(itemstochange, saveasfile, filename='pose_cfg.yaml'):
+def make_train_pose_yaml(itemstochange, saveasfile, filename='pose_cfg.yaml'):
     # FIXME: we need to change this!!
     filename = os.path.join(os.path.dirname(__file__), filename)
     raw = open(filename).read()
@@ -61,7 +61,7 @@ def MakeTrain_pose_yaml(itemstochange, saveasfile, filename='pose_cfg.yaml'):
     return docs[0]
 
 
-def MakeTest_pose_yaml(dictionary, keys2save, saveasfile):
+def make_test_pose_yaml(dictionary, keys2save, saveasfile):
     dict_test = {}
     for key in keys2save:
         dict_test[key] = dictionary[key]
@@ -104,7 +104,7 @@ def generate_training_file_from_labelled_data():
 
     for shuffle in CONF.net.shuffles:
         for trainFraction in CONF.net.training_fraction:
-            trainIndexes, testIndexes = SplitTrials(
+            trainIndexes, testIndexes = split_trials(
                 range(len(Data.index)), trainFraction)
             filename_matfile = paths.get_train_matfile(trainFraction, shuffle)
             # Filename for pickle file:
@@ -202,7 +202,7 @@ def generate_training_file_from_labelled_data():
                 "all_joints_names": CONF.labelling.bodyparts
             }
 
-            trainingdata = MakeTrain_pose_yaml(
+            trainingdata = make_train_pose_yaml(
                 items2change,
                 paths.get_pose_cfg_train(trainFraction, shuffle),
                 filename="pose_cfg.yaml"
@@ -212,7 +212,7 @@ def generate_training_file_from_labelled_data():
                 "net_type", 'init_weights', 'global_scale',
                 'location_refinement', 'locref_stdev'
             ]
-            MakeTest_pose_yaml(
+            make_test_pose_yaml(
                 trainingdata,
                 keys2save,
                 paths.get_pose_cfg_test(trainFraction, shuffle)
