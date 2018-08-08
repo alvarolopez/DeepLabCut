@@ -154,7 +154,7 @@ def main():
 
             # extract training iterations:
             TrainingIterations = [
-                (int(fns[j].split("forTask")[0].split('_')[-1]), j)
+                (int(fns[j].split("train-iterations-")[-1].split('.')[0]), j)
                 for j in range(len(fns))
             ]
             # sort according to increasing # training steps!
@@ -221,22 +221,22 @@ def main():
                       "pixels")
 
                 # FIXME(aloga): review this!!!! need a display for plotting
-#              if CONF.evaluation.plotting==True:
-#                 foldername=os.path.join(results_dir, 'LabeledImages_'+
-#                                         scorer_machine)
-#                 utils.attempttomakefolder(foldername)
-#                 NumFrames=np.size(DataCombined.index)
-#                 for ind in np.arange(NumFrames):
-#                     fn=DataCombined.index[ind]
-#
-#                     fig=plt.figure()
-#                     ax=fig.add_subplot(1,1,1)
-#                     MakeLabeledImage(DataCombined,ind,os.path.join(datafolder,'data-'+Task),[scorer,scorer_machine],comparisonbodyparts,colors)
-#                     if ind in trainIndexes:
-#                         plt.savefig(os.path.join(foldername,'TrainingImg'+str(ind)+'_'+fn.split('/')[0]+'_'+fn.split('/')[1]))
-#                     else:
-#                         plt.savefig(os.path.join(foldername,'TestImg'+str(ind)+'_'+fn.split('/')[0]+'_'+fn.split('/')[1]))
-#                     plt.close("all")
+##              if CONF.evaluation.plotting==True:
+##                 foldername=os.path.join(results_dir, 'LabeledImages_'+
+##                                         scorer_machine)
+##                 utils.attempttomakefolder(foldername)
+##                 NumFrames=np.size(DataCombined.index)
+##                 for ind in np.arange(NumFrames):
+##                     fn=DataCombined.index[ind]
+##
+##                     fig=plt.figure()
+##                     ax=fig.add_subplot(1,1,1)
+##                     MakeLabeledImage(DataCombined,ind,os.path.join(datafolder,'data-'+Task),[scorer,scorer_machine],comparisonbodyparts,colors)
+##                     if ind in trainIndexes:
+##                         plt.savefig(os.path.join(foldername,'TrainingImg'+str(ind)+'_'+fn.split('/')[0]+'_'+fn.split('/')[1]))
+##                     else:
+##                         plt.savefig(os.path.join(foldername,'TestImg'+str(ind)+'_'+fn.split('/')[0]+'_'+fn.split('/')[1]))
+##                     plt.close("all")
 
 
 if __name__ == "__main__":

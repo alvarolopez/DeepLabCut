@@ -195,7 +195,7 @@ def main(videofolder=None):
             if CONF.analysis.store_as_csv:
                 DataMachine.to_csv(video.split('.')[0] + scorer + '.csv')
 
-            with open(dataname.split('.')[0] + 'includingmetadata.pickle',
+            with open(dataname.split('.')[0] + '.pickle',
                       'wb') as f:
                 pickle.dump(metadata, f, pickle.HIGHEST_PROTOCOL)
 

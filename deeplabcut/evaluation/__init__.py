@@ -36,7 +36,7 @@ from tqdm import tqdm
 CONF = myconfig.CONF
 
 
-def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
+def evaluate_network(snapshot, shuffle_index, train_fraction_index):
     print("Starting evaluation")
 
     shuffle = CONF.net.shuffles[shuffle_index]
@@ -62,14 +62,26 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
                                      for m in Snapshots])
     Snapshots = Snapshots[increasing_indices]
 
-    cfg['init_weights'] = Snapshots[snapshot_index]
+    cfg['init_weights'] = snapshot
     trainingsiterations = cfg['init_weights'].rsplit('-')[-1]
+
     DLCscorer = paths.get_scorer_name(cfg["net_type"],
                                       trainFraction,
                                       shuffle,
                                       trainingsiterations)
-    print("Running ", DLCscorer,
-          " with # of trainingiterations:", trainingsiterations)
+
+    aux = ("'DeepCut' for task '%(task)s' on '%(date)s'. "
+           "ResNet '%(net_type)s' trained with "
+           "'%(frac)s' of the data, shuffle '%(shuffle)s', "
+           "number of network interations '%(iters)s'" % {
+                "task": CONF.task,
+                "date": CONF.net.date,
+                "net_type": cfg["net_type"],
+                "frac": trainFraction,
+                "shuffle": shuffle,
+                "iters": trainingsiterations,
+    })
+    print("Running", aux)
 
     results_dir = paths.get_results_dir()
     utils.attempttomakefolder(results_dir)
@@ -77,6 +89,7 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
                                          trainFraction,
                                          shuffle,
                                          trainingsiterations)
+    print("Storing under", results_file)
 
     try:
         Data = pd.read_hdf(results_file,
@@ -84,7 +97,6 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
         print("This net has already been evaluated!")
     except FileNotFoundError:
         # Specifying state of model (snapshot / training state)
-        cfg['init_weights'] = Snapshots[snapshot_index]
         sess, inputs, outputs = predict.setup_pose_prediction(cfg)
 
         Numimages = len(Data.index)
@@ -125,5 +137,4 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
                            'df_with_missing',
                            format='table',
                            mode='w')
-        print("Done and results stored for snapshot: ",
-              Snapshots[snapshot_index])
+        print("Done and results stored for snapshot:", snapshot)

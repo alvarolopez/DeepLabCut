@@ -81,26 +81,32 @@ def get_video_dataset_frames(dataset):
 
 def get_train_dataset_dir():
     # Make that folder and put in the collecteddata (see below)
-    bf = "UnaugmentedDataSet_" + CONF.task + CONF.net.date + "/"
+    bf = "trainset_%s_%s/" % (CONF.task, CONF.net.date)
     return os.path.join(get_train_dir(), bf)
 
 
 def get_train_matfile(train_fraction, shuffle):
-    return os.path.join(
-        get_train_dataset_dir(),
-        CONF.task + "_" + CONF.labelling.scorer +
-        str(int(100 * train_fraction)) + "shuffle" + str(shuffle) +
-        ".mat"
+    name = (
+        "%(label)s_%(scorer)s_trainfrac%(frac)s_shuffle%(shuffle)s.mat" % {
+            "label": CONF.task,
+            "scorer": CONF.labelling.scorer,
+            "frac": int(100 * train_fraction),
+            "shuffle": shuffle
+        }
     )
+    return os.path.join(get_train_dataset_dir(), name)
 
 
 def get_train_docfile(train_fraction, shuffle):
-    return os.path.join(
-        get_train_dataset_dir(),
-        "Documentation_" + CONF.task + "_" +
-        str(int(train_fraction * 100)) + "shuffle" + str(shuffle) +
-        ".pickle"
+    name = (
+        "%(label)s_%(scorer)s_trainfrac%(frac)s_shuffle%(shuffle)s.pickle" % {
+            "label": CONF.task,
+            "scorer": CONF.labelling.scorer,
+            "frac": int(100 * train_fraction),
+            "shuffle": shuffle
+        }
     )
+    return os.path.join(get_train_dataset_dir(), name)
 
 
 def get_training_imagefile(filename):
@@ -111,11 +117,15 @@ def get_training_imagefile(filename):
 
 
 def get_experiment_name(train_fraction, shuffle):
-    return os.path.join(
-        get_train_dir(),
-        CONF.task + CONF.net.date + '-trainset' +
-        str(int(train_fraction * 100)) + 'shuffle' + str(shuffle)
+    name = (
+        "%(label)s_%(scorer)s_trainfrac%(frac)s_shuffle%(shuffle)s_cfg" % {
+            "label": CONF.task,
+            "scorer": CONF.labelling.scorer,
+            "frac": int(100 * train_fraction),
+            "shuffle": shuffle
+        }
     )
+    return os.path.join(get_train_dataset_dir(), name)
 
 
 def get_pose_cfg_test(train_fraction, shuffle):
@@ -141,10 +151,21 @@ def get_train_snapshots(trainFraction, shuffle):
 
 
 def get_scorer_name(net_type, train_fraction, shuffle, iters):
-    return ('DeepCut' + "_resnet" + str(net_type) + "_" +
-            str(int(train_fraction * 100)) + 'shuffle' + str(shuffle) +
-            '_' + str(iters) + "forTask_" + CONF.task +
-            str(CONF.net.date))
+    name = (
+        "scores_deepcut_%(task)s_"
+        "%(date)s_"
+        "%(net_type)s_"
+        "training-fraction-%(frac)s_"
+        "shuffle-%(shuffle)s_"
+        "train-iterations-%(iters)s" % {
+            "task": CONF.task,
+            "date": CONF.net.date,
+            "net_type": net_type,
+            "frac": int(train_fraction * 100),
+            "shuffle": shuffle,
+            "iters": iters,
+        })
+    return name
 
 
 def get_scorer_file(net_type, train_fraction, shuffle, iters):
@@ -155,9 +176,10 @@ def get_scorer_file(net_type, train_fraction, shuffle, iters):
 def get_evaluation_files(train_fraction, shuffle):
     return [
         f for f in os.listdir(get_results_dir())
-        if "forTask_" + str(CONF.task) in f and
-        "shuffle" + str(shuffle) in f and
-        "_" + str(int(train_fraction * 100)) in f
+        if f.startswith("scores_deepcut_") and
+        str(CONF.task) in f and
+        "shuffle-" + str(shuffle) in f and
+        "training-fraction-" + str(int(train_fraction * 100)) in f
     ]
 
 
@@ -168,7 +190,7 @@ def get_videos(video_dir=get_video_dir()):
 
 
 def get_video_dataname(video, scorer):
-    dataname = video.split('.')[0] + scorer + '.h5'
+    dataname = video.split('.')[0] + "_" + scorer + '.h5'
     # Get rid of prefix
     dataname = os.path.basename(dataname)
     return os.path.join(get_video_outdir(video), dataname)
@@ -179,7 +201,7 @@ def get_video_all_datanames(video):
     return [
         os.path.join(get_video_outdir(video), fn)
         for fn in os.listdir(get_video_outdir(video))
-        if ((video in fn) and (".h5" in fn) and "resnet" in fn)
+        if fn.startswith(video + "_scores_deepcut_") and fn.endswith(".h5")
     ]
 
 

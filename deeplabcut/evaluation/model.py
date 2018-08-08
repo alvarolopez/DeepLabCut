@@ -23,7 +23,6 @@ import numpy as np
 import pandas as pd
 
 # Deep-cut dependencies
-from deeplabcut.pose_tensorflow.config import load_config
 from deeplabcut import evaluation
 
 CONF = myconfig.CONF
@@ -41,8 +40,6 @@ def main():
             # Check which snapshots exist for given network (with training data
             # split).
             ###################################################################
-
-            cfg = load_config(paths.get_pose_cfg_test(trainFraction, shuffle))
 
             # Check which snap shots are available and sort them by #
             # iterations
@@ -67,24 +64,5 @@ def main():
                           "up to last, or all (as string)!")
 
             for snapIndex in snapindices:
-                cfg['init_weights'] = Snapshots[snapIndex]
-                trainingsiterations = cfg['init_weights'].rsplit('-')[-1]
-
-                scorer = paths.get_scorer_name(cfg["net_type"],
-                                               trainFraction,
-                                               shuffle,
-                                               trainingsiterations)
-
-                print("Running ", scorer,
-                      " with # of trainingiterations:", trainingsiterations)
-
-                try:
-                    pd.read_hdf(paths.get_scorer_file(cfg["net_type"],
-                                                      trainFraction,
-                                                      shuffle,
-                                                      trainingsiterations),
-                                'df_with_missing')
-                    print("This net has already been evaluated!")
-                except FileNotFoundError:
-                    evaluation.evaluate_network(snapIndex, shuffleIndex,
-                                                trainFractionIndex)
+                evaluation.evaluate_network(Snapshots[snapIndex], shuffleIndex,
+                                            trainFractionIndex)
