@@ -48,7 +48,7 @@ def evaluate_network(snapshot_index, shuffle_index, train_fraction_index):
     with open(datafile, 'rb') as f:
         data, trainIndices, testIndices, __ignore__ = pickle.load(f)
 
-    Data = pd.read_hdf(paths.get_collected_data_file(CONF.label.scorer),
+    Data = pd.read_hdf(paths.get_collected_data_file(CONF.labelling.scorer),
                        'df_with_missing')
 
     #######################################################################

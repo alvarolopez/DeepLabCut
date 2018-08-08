@@ -6,31 +6,63 @@ from oslo_config import cfg
 
 CONF = cfg.CONF
 
-data_opts = [
+# General options
+
+opts = [
     cfg.StrOpt(
         "task",
         default="reaching",
         help="""
-Task that is being performed in the video.
+Task that is being performed in the video. This is used for indentifying a
+        trained model that is specialized in this task. We will use this string
+        as a label for all the steps of the DeepLabCut toolbox.
 """
     ),
     cfg.StrOpt(
         "base-directory",
         default="data",
         help="""
-Base directory for data.
+Base directory for data. All the data that will be read and written will be
+        done within this directory. You can check which structure we are using
+        by issuing the command `dlc-config-print-paths`.
 """
     ),
+]
+
+CONF.register_cli_opts(opts)
+
+# Data sampling options
+# FIXME(aloga): hide these when not issuing any related command
+sampling_opts = [
     cfg.StrOpt(
         "video-file",
         default="reachingvideo1.avi",
         help="""
-Video to extract frames from.
+Video file to extract frames from. The video should be stored in the
+        ${base_directory}/raw/${task} directory. We will extract the frames
+        into the  ${base_directory}/frames/${task}/ directory.
 """
     ),
+    cfg.IntOpt(
+        "portion",
+        default=1,
+        help="""
+Portion of the video to sample from in step 1. Set to 1 by default.
+"""
+    ),
+]
+CONF.register_opts(sampling_opts, group="sampling")
+
+# Common video options, in theory these should be used when sampling and when
+# making the analysis.
+video_opts = [
     cfg.BoolOpt(
         "cropping",
         default=True,
+        help="""
+Whether we should crop the video or not, taking into account the x1, x2, y1, y2
+        coordinates.
+"""
     ),
     cfg.IntOpt(
         "x1",
@@ -64,18 +96,13 @@ ROI dimensions / bounding box (only used if cropping == True) x1,y1 indicates
         the top left corner and x2,y2 is the lower right corner of the croped
         region.
 """),
-    cfg.IntOpt(
-        "portion",
-        default=1,
-        help="""
-Portion of the video to sample from in step 1. Set to 1 by default.
-"""
-    ),
 ]
 
-CONF.register_cli_opts(data_opts, group="data")
+CONF.register_opts(video_opts, group="video")
 
-dataframe_opts = [
+# Options that are related with the human labelling of the images, that is, who
+# did the labelling and how this is stored.
+labelling_opts = [
     cfg.ListOpt(
         "bodyparts",
         default=["hand", "Finger1", "Finger2", "Joystick"],
@@ -83,11 +110,11 @@ dataframe_opts = [
 Exact sequence of labels as were put by annotator in *csv files
 """
     ),
-    cfg.ListOpt(
-        "scorers",
-        default=["Mackenzie"],
+    cfg.StrOpt(
+        "scorer",
+        default="Mackenzie",
         help="""
-Who is labelling the data
+Who did the labelling of the data.
 """
     ),
     cfg.BoolOpt(
@@ -105,7 +132,7 @@ Set this true if the data was sequentially labeled and if there is one file per
         "multibodypartsfilename",
         default="Results.csv",
         help="""
-File name to use when multibodypartsfile=True
+File name to use when multibodypartsfile is set to True.
 """
     ),
     cfg.IntOpt(
@@ -118,60 +145,58 @@ When importing the images and the labels in the csv/xls files should be in the
         0,0)) these 'false' labels will then be removed. To do so set the
         following variable: set this to 0 if no labels should be removed!" If
         labels are closer to origin than this number they are set to NaN.
-        Please adjust to your situation." Units in pixel.
+        Please adjust to your situation. Units in pixel.
 """
     ),
     cfg.StrOpt(
         "imagetype",
         default=".png",
         help="""
-Image type of extracted frames (do not change if you used our step1). If you
-        started from already extracted frames in a different format then change
-        the format here (for step2 to 4).
+Image of extracted frames, defaults to ".png".  If you started from already
+        extracted frames in a different format then change the format here.
 """
     ),
 ]
 
-CONF.register_cli_opts(dataframe_opts, group="dataframe")
+CONF.register_opts(labelling_opts, group="labelling")
 
-########################################
-# Step 3: Check labels / makes plots
-########################################
-
+# Options related with how the labels will be plotted
 label_opts = [
+    cfg.StrOpt(
+        "label",
+        default="+",
+        help="""
+Matplotlib label to use (e.g. ".", "+", "*") for the labelling (plotting) of
+        the images.
+"""
+    ),
     cfg.StrOpt(
         "colormap",
         default="cool",
         help="""
-Set color map (e.g. viridis, cool, hsv)
+Matplotlib color map (e.g. viridis, cool, hsv) to use for the labelling
+        (ploting) of images.
 """
     ),
     cfg.FloatOpt(
         "scale",
         default=1,
         help="""
-Set scaling for plotting
+Matplotlib scaling for the labelling (plotting) of the images.
 """
     ),
     cfg.IntOpt(
         "label-size",
         default=10,
         help="""
-Label size
+Label size for the labelling (plotting) of the images.
 """
     ),
     cfg.FloatOpt(
         "alpha",
         default=0.6,
         help="""
-Label transparency
-"""
-    ),
-    cfg.StrOpt(
-        "scorer",
-        default="Mackenzie",
-        help="""
-Who has labelled the data
+Label transparency level for the labelling (plotting) of the images.
 """
     ),
 ]
@@ -186,13 +211,17 @@ net_opts = [
     cfg.StrOpt(
         "date",
         default="Jan30",
+        help="""
+Date when the training was done. This is just used to identify the network
+        configuration.
+"""
     ),
     cfg.ListOpt(
         "shuffles",
         default=[1],
         item_type=int,
         help="""
-Ids for shuffles, i.e. range(5) for 5 shuffles
+Identificators for all the shuffles that we will use for traning.
 """
     ),
     cfg.ListOpt(
@@ -200,14 +229,15 @@ Ids for shuffles, i.e. range(5) for 5 shuffles
         default=[0.95],
         item_type=float,
         help="""
-Fraction of labeled images used for training
+Fraction of labeled images used for training.
 """
     ),
     cfg.StrOpt(
         "resnet",
         default="50",
+        choices=["101", "50"],
         help="""
-Which resnet to use
+Which resnet to use, valid values are "101" or "50", use "50" by default.
 """
     ),
 ]
@@ -241,14 +271,14 @@ likelihood. RMSE will be reported for all pairs and pairs with larger
 """
     ),
 ]
-CONF.register_cli_opts(evaluation_opts, group="evaluation")
+CONF.register_opts(evaluation_opts, group="evaluation")
 
 # Analysis options
 
 analysis_opts = [
     cfg.StrOpt(
         "video-directory",
-        default="${data.base_directory}/videos",
+        default="${base_directory}/videos",
         help="""
 Base directory for videos to analyze.
 """
@@ -294,6 +324,19 @@ Fraction of labeled images used for training
 ]
 
 CONF.register_opts(analysis_opts, group="analysis")
+
+
+def list_opts():
+    return [
+        ("DEFAULT", opts),
+        ("sampling", sampling_opts),
+        ("video", video_opts),
+        ("labelling", labelling_opts),
+        ("label", label_opts),
+        ("net", net_opts),
+        ("evaluation", evaluation_opts),
+        ("analysis", analysis_opts),
+    ]
 
 
 def parse_args(argv=sys.argv, default_config_files=None):

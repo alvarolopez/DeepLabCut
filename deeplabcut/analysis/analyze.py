@@ -129,12 +129,12 @@ def main(videofolder=None):
             # to rounding errors (as Rich Warren found). Later we crop the
             # result (line 187)
 
-            if CONF.data.cropping:
+            if CONF.video.cropping:
                 clip = clip.crop(
-                    y1=CONF.data.y1,
-                    y2=CONF.data.y2,
-                    x1=CONF.data.x1,
-                    x2=CONF.data.x2)
+                    y1=CONF.video.y1,
+                    y2=CONF.video.y2,
+                    x1=CONF.video.x1,
+                    x2=CONF.video.x2)
 
             print("Duration of video [s]: ", clip.duration,
                   ", recorded with ", fps, "fps!")

@@ -127,7 +127,7 @@ def main():
     ####################################################
 
     # loading meta data / i.e. training & test files
-    Data = pd.read_hdf(paths.get_collected_data_file(CONF.label.scorer),
+    Data = pd.read_hdf(paths.get_collected_data_file(CONF.labelling.scorer),
                        'df_with_missing')
 
     ####################################################
@@ -193,7 +193,7 @@ def main():
                 MSE, MSEpcutoff = pairwisedistances(
                     DataCombined,
                     DataMachine,
-                    CONF.label.scorer,
+                    CONF.labelling.scorer,
                     scorer_machine,
                     CONF.evaluation.pcutoff,
                     comparisonbodyparts)

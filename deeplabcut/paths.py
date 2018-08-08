@@ -5,35 +5,35 @@ from deeplabcut import myconfig
 CONF = myconfig.CONF
 
 def get_base_dir():
-    return os.path.abspath(CONF.data.base_directory)
+    return os.path.abspath(CONF.base_directory)
 
 
 def get_frame_dir():
-    return os.path.join(get_base_dir(), "frames", CONF.data.task)
+    return os.path.join(get_base_dir(), "frames", CONF.task)
 
 
 def get_raw_dir():
-    return os.path.join(get_base_dir(), "raw", CONF.data.task)
+    return os.path.join(get_base_dir(), "raw", CONF.task)
 
 
 def get_label_dir():
-    return os.path.join(get_base_dir(), "labels", CONF.data.task)
+    return os.path.join(get_base_dir(), "labels", CONF.task)
 
 
 def get_tmp_dir(dirname=""):
-    return os.path.join(get_base_dir(), "tmp", CONF.data.task, dirname)
+    return os.path.join(get_base_dir(), "tmp", CONF.task, dirname)
 
 
 def get_train_dir():
-    return os.path.join(get_base_dir(), "train", CONF.data.task)
+    return os.path.join(get_base_dir(), "train", CONF.task)
 
 
 def get_pre_trained_dir():
-    return os.path.join(get_base_dir(), "train", CONF.data.task, "pretrained")
+    return os.path.join(get_base_dir(), "train", CONF.task, "pretrained")
 
 
 def get_results_dir():
-    return os.path.join(get_base_dir(), "results", CONF.data.task)
+    return os.path.join(get_base_dir(), "results", CONF.task)
 
 
 def get_video_dir():
@@ -45,12 +45,12 @@ def get_output_dir():
 
 
 def get_raw_video_file():
-    filename = CONF.data.video_file
+    filename = CONF.sampling.video_file
     return os.path.join(get_raw_dir(), filename)
 
 
 def get_video_frames_dir():
-    filename = CONF.data.video_file
+    filename = CONF.sampling.video_file
     return os.path.join(get_frame_dir(), filename.split('.')[0])
 
 
@@ -72,7 +72,7 @@ def get_video_dataset_frames(dataset):
     files = [
         os.path.join(aux, fn) for fn in os.listdir(aux)
         if ("img" in fn and
-            CONF.dataframe.imagetype in fn and
+            CONF.labelling.imagetype in fn and
             "_labelled" not in fn)
     ]
     files.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
@@ -81,14 +81,14 @@ def get_video_dataset_frames(dataset):
 
 def get_train_dataset_dir():
     # Make that folder and put in the collecteddata (see below)
-    bf = "UnaugmentedDataSet_" + CONF.data.task + CONF.net.date + "/"
+    bf = "UnaugmentedDataSet_" + CONF.task + CONF.net.date + "/"
     return os.path.join(get_train_dir(), bf)
 
 
 def get_train_matfile(train_fraction, shuffle):
     return os.path.join(
         get_train_dataset_dir(),
-        CONF.data.task + "_" + CONF.label.scorer +
+        CONF.task + "_" + CONF.labelling.scorer +
         str(int(100 * train_fraction)) + "shuffle" + str(shuffle) +
         ".mat"
     )
@@ -97,7 +97,7 @@ def get_train_matfile(train_fraction, shuffle):
 def get_train_docfile(train_fraction, shuffle):
     return os.path.join(
         get_train_dataset_dir(),
-        "Documentation_" + CONF.data.task + "_" +
+        "Documentation_" + CONF.task + "_" +
         str(int(train_fraction * 100)) + "shuffle" + str(shuffle) +
         ".pickle"
     )
@@ -113,7 +113,7 @@ def get_training_imagefile(filename):
 def get_experiment_name(train_fraction, shuffle):
     return os.path.join(
         get_train_dir(),
-        CONF.data.task + CONF.net.date + '-trainset' +
+        CONF.task + CONF.net.date + '-trainset' +
         str(int(train_fraction * 100)) + 'shuffle' + str(shuffle)
     )
 
@@ -143,7 +143,7 @@ def get_train_snapshots(trainFraction, shuffle):
 def get_scorer_name(net_type, train_fraction, shuffle, iters):
     return ('DeepCut' + "_resnet" + str(net_type) + "_" +
             str(int(train_fraction * 100)) + 'shuffle' + str(shuffle) +
-            '_' + str(iters) + "forTask_" + CONF.data.task +
+            '_' + str(iters) + "forTask_" + CONF.task +
             str(CONF.net.date))
 
 
@@ -155,7 +155,7 @@ def get_scorer_file(net_type, train_fraction, shuffle, iters):
 def get_evaluation_files(train_fraction, shuffle):
     return [
         f for f in os.listdir(get_results_dir())
-        if "forTask_" + str(CONF.data.task) in f and
+        if "forTask_" + str(CONF.task) in f and
         "shuffle" + str(shuffle) in f and
         "_" + str(int(train_fraction * 100)) in f
     ]
@@ -196,8 +196,8 @@ def print_data_dirs():
     print("\t          frame dir:", get_frame_dir())
     print("\t   video frames dir:", get_video_frames_dir())
     print("\t         labels dir:", get_label_dir())
-    for scorer in CONF.dataframe.scorers:
-        print("\t        labels file:", get_collected_data_file(scorer=scorer))
+    scorer = CONF.labelling.scorer
+    print("\t        labels file:", get_collected_data_file(scorer=scorer))
     print("\t            tmp dir:", get_tmp_dir())
     print("\t          train dir:", get_train_dir())
     print("\t pre-trained TF dir:", get_pre_trained_dir())

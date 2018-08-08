@@ -27,7 +27,7 @@ imageio.plugins.ffmpeg.download()
 matplotlib.use('Agg')
 
 
-def select_random_frames(task=CONF.data.task):
+def select_random_frames(task=CONF.task):
     """Select random frames from a video.
 
     A key point is to select diverse frames, which are typical for the behavior
@@ -85,13 +85,13 @@ def select_random_frames(task=CONF.data.task):
     # Creating folder with name of experiment and extract random frames
     ####################################################
 
-    print("Videoname: ", CONF.data.video_file)
+    print("Videoname: ", CONF.sampling.video_file)
     folder = paths.get_video_frames_dir()
     print(folder)
     utils.attempttomakefolder(folder)
 
     frames = np.random.randint(
-        math.floor(clip.duration * clip.fps * CONF.data.portion),
+        math.floor(clip.duration * clip.fps * CONF.sampling.portion),
         size=numframes2pick - 1
     )
     width = int(np.ceil(np.log10(clip.duration * clip.fps)))

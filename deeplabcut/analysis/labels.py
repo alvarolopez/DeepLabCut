@@ -59,12 +59,12 @@ def CreateVideo(clip, Dataframe, outdir, tmpfolder, vname):
     ny, nx = clip.size  # dimensions of frame (height, width)
     fps = clip.fps
     nframes = len(Dataframe.index)
-    if CONF.data.cropping:
+    if CONF.video.cropping:
         # one might want to adjust
-        clip = clip.crop(y1=CONF.data.y1,
-                         y2=CONF.data.y2,
-                         x1=CONF.data.x1,
-                         x2=CONF.data.x2)
+        clip = clip.crop(y1=CONF.video.y1,
+                         y2=CONF.video.y2,
+                         x1=CONF.video.x1,
+                         x2=CONF.video.x2)
     clip.reader.initialize()
     print("Duration of video [s]: ", clip.duration, ", recorded with ", fps,
           "fps!")

@@ -51,14 +51,14 @@ def convert_labels_to_data_frame():
     ###################################################
 
     # FIXME(aloga): check this
-#    if CONF.dataframe.multibodypartsfile==True:
+#    if CONF.labelling.multibodypartsfile==True:
 #        folders = [name for name in os.listdir(frame_folder)
 #                   if os.path.isdir(os.path.join(basefolder, name))]
 #        for folder in folders:
 #            # load csv, iterate over nth value in a grouping by frame, save to
 #            bodyparts files
 #            dframe = pd.read_csv(os.path.join(
-#                   basefolder,afolder,CONF.dataframe.multibodypartsfilename))
+#                   basefolder,afolder,CONF.labelling.multibodypartsfilename))
 # Note: the order of bodyparts list in myconfig and labels must be identical!
 #            frame_grouped = dframe.groupby('Slice')
 #            for i, bodypart in enumerate(bodyparts):
@@ -71,95 +71,95 @@ def convert_labels_to_data_frame():
     # Code if each bodypart has its own label file!
     ###################################################
 
-    for scorer in CONF.dataframe.scorers:
-        # Make list of different video data sets / each one has its own folder
-        folders = paths.get_video_datasets()
-        try:
-            filename = paths.get_collected_data_file(scorer)
-            DataSingleUser = pd.read_hdf(filename, 'df_with_missing')
-            # NOTE: SLICING to eliminate multiindices!
-            numdistinctfolders = list(
-                set([s.split('/')[0] for s in DataSingleUser.index
-                     ]))
-            # print("found",len(folders),len(numdistinctfolders))
-            if len(folders) > len(numdistinctfolders):
-                DataSingleUser = None
-                print("Not all data converted!")
-            else:
-                print(scorer, "'s data already collected!")
-                print(DataSingleUser.head())
-        except FileNotFoundError:
+    scorer = CONF.labelling.scorer
+    # Make list of different video data sets / each one has its own folder
+    folders = paths.get_video_datasets()
+    try:
+        filename = paths.get_collected_data_file(scorer)
+        DataSingleUser = pd.read_hdf(filename, 'df_with_missing')
+        # NOTE: SLICING to eliminate multiindices!
+        numdistinctfolders = list(
+            set([s.split('/')[0] for s in DataSingleUser.index
+                    ]))
+        # print("found",len(folders),len(numdistinctfolders))
+        if len(folders) > len(numdistinctfolders):
             DataSingleUser = None
+            print("Not all data converted!")
+        else:
+            print(scorer, "'s data already collected!")
+            print(DataSingleUser.head())
+    except FileNotFoundError:
+        DataSingleUser = None
 
-        if DataSingleUser is None:
-            for folder in folders:
-                files = paths.get_video_dataset_frames(folder)
+    if DataSingleUser is None:
+        for folder in folders:
+            files = paths.get_video_dataset_frames(folder)
 
-                frame, Frame = None, None
-                for bodypart in CONF.dataframe.bodyparts:
-                    datafile = bodypart
-                    datafile = os.path.join(label_folder, folder, datafile)
-                    dframe = pd.read_csv(datafile + ".csv",
-                                         # FIXME(aloga) add csv separator
-                                         sep=None,
-                                         engine='python')
+            frame, Frame = None, None
+            for bodypart in CONF.labelling.bodyparts:
+                datafile = bodypart
+                datafile = os.path.join(label_folder, folder, datafile)
+                dframe = pd.read_csv(datafile + ".csv",
+                                        # FIXME(aloga) add csv separator
+                                        sep=None,
+                                        engine='python')
 
-                    if dframe.shape[0] != len(files):
-                        new_index = pd.Index(
-                            np.arange(len(files)) + 1, name='Slice')
-                        dframe = dframe.set_index('Slice').reindex(new_index)
-                        dframe = dframe.reset_index()
+                if dframe.shape[0] != len(files):
+                    new_index = pd.Index(
+                        np.arange(len(files)) + 1, name='Slice')
+                    dframe = dframe.set_index('Slice').reindex(new_index)
+                    dframe = dframe.reset_index()
 
-                    index = pd.MultiIndex.from_product(
-                        [[scorer], [bodypart], ['x', 'y']],
-                        names=['scorer', 'bodyparts', 'coords'])
+                index = pd.MultiIndex.from_product(
+                    [[scorer], [bodypart], ['x', 'y']],
+                    names=['scorer', 'bodyparts', 'coords'])
 
-                    Xrescaled = dframe.X.values.astype(float)
-                    Yrescaled = dframe.Y.values.astype(float)
+                Xrescaled = dframe.X.values.astype(float)
+                Yrescaled = dframe.Y.values.astype(float)
 
-                    # get rid of values that are invisible >> thus user scored
-                    # in left corner!
-                    invisiblemarkersmask = (
-                        Xrescaled < CONF.dataframe.invisibleboundary) * (
-                            Yrescaled < CONF.dataframe.invisibleboundary)
-                    Xrescaled[invisiblemarkersmask] = np.nan
-                    Yrescaled[invisiblemarkersmask] = np.nan
+                # get rid of values that are invisible >> thus user scored
+                # in left corner!
+                invisiblemarkersmask = (
+                    Xrescaled < CONF.labelling.invisibleboundary) * (
+                        Yrescaled < CONF.labelling.invisibleboundary)
+                Xrescaled[invisiblemarkersmask] = np.nan
+                Yrescaled[invisiblemarkersmask] = np.nan
 
-                    if Frame is None:
-                        # frame=pd.DataFrame(np.vstack([dframe.X,dframe.Y]).T,
-                        # columns=index,index=files)
-                        frame = pd.DataFrame(
-                            np.vstack([Xrescaled, Yrescaled]).T,
-                            columns=index,
-                            index=files)
-                        # print(frame.head())
-                        Frame = frame
-                    else:
-                        frame = pd.DataFrame(
-                            np.vstack([Xrescaled, Yrescaled]).T,
-                            columns=index,
-                            index=files)
-                        Frame = pd.concat(
-                            [Frame, frame],
-                            axis=1)  # along bodyparts & scorer dimension
-
-                # print("Done with folder ", folder)
-                if DataSingleUser is None:
-                    DataSingleUser = Frame
+                if Frame is None:
+                    # frame=pd.DataFrame(np.vstack([dframe.X,dframe.Y]).T,
+                    # columns=index,index=files)
+                    frame = pd.DataFrame(
+                        np.vstack([Xrescaled, Yrescaled]).T,
+                        columns=index,
+                        index=files)
+                    # print(frame.head())
+                    Frame = frame
                 else:
-                    DataSingleUser = pd.concat(
-                        [DataSingleUser, Frame], axis=0)  # along filenames!
+                    frame = pd.DataFrame(
+                        np.vstack([Xrescaled, Yrescaled]).T,
+                        columns=index,
+                        index=files)
+                    Frame = pd.concat(
+                        [Frame, frame],
+                        axis=1)  # along bodyparts & scorer dimension
 
-            # Save data by this scorer
-            filename = paths.get_collected_data_file(scorer, filetype='.csv')
-            # breaks multiindices HDF5 tables better!
-            DataSingleUser.to_csv(filename)
+            # print("Done with folder ", folder)
+            if DataSingleUser is None:
+                DataSingleUser = Frame
+            else:
+                DataSingleUser = pd.concat(
+                    [DataSingleUser, Frame], axis=0)  # along filenames!
 
-            filename = paths.get_collected_data_file(scorer)
-            DataSingleUser.to_hdf(filename,
-                                  'df_with_missing',
-                                  format='table',
-                                  mode='w')
+        # Save data by this scorer
+        filename = paths.get_collected_data_file(scorer, filetype='.csv')
+        # breaks multiindices HDF5 tables better!
+        DataSingleUser.to_csv(filename)
+
+        filename = paths.get_collected_data_file(scorer)
+        DataSingleUser.to_hdf(filename,
+                                'df_with_missing',
+                                format='table',
+                                mode='w')
 
         print("Merging scorer's data.")
 
@@ -185,32 +185,23 @@ def check_labels():
     alphavalue = CONF.label.alpha
 #    colormap = CONF.label.colormap
 
-    ###################################################
-    # Code if each bodypart has its own label file!
-    ###################################################
-
-    Labels = ['.', '+', '*']  # order of labels for different scorers
-
-    #############################################
-    # Make sure you update the train.yaml file!
-    #############################################
-
-    bodyparts = CONF.dataframe.bodyparts
+    bodyparts = CONF.labelling.bodyparts
     num_joints = len(bodyparts)
     all_joints = map(lambda j: [j], range(num_joints))
     all_joints_names = bodyparts
 
     Colorscheme = get_cmap(len(bodyparts))
 
-    print(num_joints)
-    print(all_joints)
-    print(all_joints_names)
+#    print(num_joints)
+#    print(all_joints)
+    print("Data was collected for", all_joints_names)
 
     # Data frame to hold data of all data sets for different scorers, bodyparts
     # and images
     DataCombined = None
 
-    filename = paths.get_collected_data_file(CONF.label.scorer)
+    scorer = CONF.labelling.scorer
+    filename = paths.get_collected_data_file(scorer)
     DataCombined = pd.read_hdf(filename, 'df_with_missing')
 
     # Make list of different video data sets in frame folder:
@@ -252,17 +243,17 @@ def check_labels():
                 np.array(DataCombined.index.values) == image_path)[0]
 
             plt.imshow(image, 'bone')
-            for cc, scorer in enumerate(CONF.dataframe.scorers):
-                if index == 0:
-                    print("Creating images with labels by ", scorer)
-                for c, bp in enumerate(comparisonbodyparts):
-                    plt.plot(
-                        DataCombined[scorer][bp]['x'].values[imindex],
-                        DataCombined[scorer][bp]['y'].values[imindex],
-                        Labels[cc],
-                        color=Colorscheme(c),
-                        alpha=alphavalue,
-                        ms=msize)
+            if index == 0:
+                print("Creating images with labels by", scorer,
+                      "from", filename)
+            for c, bp in enumerate(comparisonbodyparts):
+                plt.plot(
+                    DataCombined[scorer][bp]['x'].values[imindex],
+                    DataCombined[scorer][bp]['y'].values[imindex],
+                    CONF.label.label,
+                    color=Colorscheme(c),
+                    alpha=alphavalue,
+                    ms=msize)
 
             plt.xlim(0, w)
             plt.ylim(0, h)

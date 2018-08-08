@@ -90,8 +90,8 @@ def generate_training_file_from_labelled_data():
     utils.attempttomakefolder(train_folder)
 
     # Loading scorer's data:
-    Data = pd.read_hdf(paths.get_collected_data_file(CONF.label.scorer),
-                       'df_with_missing')[CONF.label.scorer]
+    Data = pd.read_hdf(paths.get_collected_data_file(CONF.labelling.scorer),
+                       'df_with_missing')[CONF.labelling.scorer]
 
     base_folder = paths.get_train_dataset_dir()
     utils.attempttomakefolder(base_folder)
@@ -134,8 +134,8 @@ def generate_training_file_from_labelled_data():
                     H['size'] = np.array([1, np.shape(im)[0], np.shape(im)[1]])
 
                 indexjoints = 0
-                joints = np.zeros((len(CONF.dataframe.bodyparts), 3)) * np.nan
-                for bpindex, bodypart in enumerate(CONF.dataframe.bodyparts):
+                joints = np.zeros((len(CONF.labelling.bodyparts), 3)) * np.nan
+                for bpindex, bodypart in enumerate(CONF.labelling.bodyparts):
                     # are labels in image?
                     if (Data[bodypart]['x'][jj] < np.shape(im)[1] and
                             Data[bodypart]['y'][jj] < np.shape(im)[0]):
@@ -193,12 +193,13 @@ def generate_training_file_from_labelled_data():
 
             items2change = {
                 "dataset": filename_matfile,
-                "num_joints": len(CONF.dataframe.bodyparts),
+                "resnet": "resnet_" + CONF.net.resnet,
+                "num_joints": len(CONF.labelling.bodyparts),
                 "init_weights": paths.get_pre_trained_file(),
                 "all_joints": [
-                    [i] for i in range(len(CONF.dataframe.bodyparts))
+                    [i] for i in range(len(CONF.labelling.bodyparts))
                 ],
-                "all_joints_names": CONF.dataframe.bodyparts
+                "all_joints_names": CONF.labelling.bodyparts
             }
 
             trainingdata = MakeTrain_pose_yaml(

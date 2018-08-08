@@ -1,0 +1,251 @@
+[DEFAULT]
+
+#
+# From deeplabcut
+#
+
+#
+# Task that is being performed in the video. This is used for indentifying a
+#         trained model that is specialized in this task. We will use this
+# string
+#         as a label for all the steps of the DeepLabCut toolbox.
+#  (string value)
+#task = reaching
+
+#
+# Base directory for data. All the data that will be read and written will be
+#         done within this directory. You can check which structure we are
+# using
+#         by issuing the command `dlc-config-print-paths`.
+#  (string value)
+#base_directory = data
+
+
+[analysis]
+
+#
+# From deeplabcut
+#
+
+#
+# Base directory for videos to analyze.
+#  (string value)
+#video_directory = ${base_directory}/videos
+
+#
+# Type of videos to analyze
+#  (string value)
+#video_type = .avi
+
+#
+# Type the number listed in the h5 file containing the pose estimation data.
+# The
+#         video will be generated
+#  (integer value)
+#trainings_iterations = 500
+
+#
+# Fraction of labeled images used for training
+#  (floating point value)
+#trainings_fraction = 0.95
+
+# (integer value)
+#shuffle_index = 1
+
+# (integer value)
+#snapshot_index = -1
+
+# (boolean value)
+#store_as_csv = false
+
+# (boolean value)
+#delete_individual_frames = false
+
+
+[data]
+
+#
+# From deeplabcut
+#
+
+#
+# Video file to extract frames from. The video should be stored in the
+#         ${base_directory}/raw/${task} directory. We will extract the frames
+#         into the  ${base_directory}/frames/${task}/ directory.
+#  (string value)
+#video_file = reachingvideo1.avi
+
+# (boolean value)
+#cropping = true
+
+#
+# ROI dimensions / bounding box (only used if cropping == True) x1,y1 indicates
+#         the top left corner and x2,y2 is the lower right corner of the croped
+#         region.
+#  (integer value)
+#x1 = 0
+
+#
+# ROI dimensions / bounding box (only used if cropping == True) x1,y1 indicates
+#         the top left corner and x2,y2 is the lower right corner of the croped
+#         region.
+#  (integer value)
+#x2 = 640
+
+#
+# ROI dimensions / bounding box (only used if cropping == True) x1,y1 indicates
+#         the top left corner and x2,y2 is the lower right corner of the croped
+#         region.
+#  (integer value)
+#y1 = 277
+
+#
+# ROI dimensions / bounding box (only used if cropping == True) x1,y1 indicates
+#         the top left corner and x2,y2 is the lower right corner of the croped
+#         region.
+#  (integer value)
+#y2 = 624
+
+#
+# Portion of the video to sample from in step 1. Set to 1 by default.
+#  (integer value)
+#portion = 1
+
+
+[dataframe]
+
+#
+# From deeplabcut
+#
+
+#
+# Exact sequence of labels as were put by annotator in *csv files
+#  (list value)
+#bodyparts = hand,Finger1,Finger2,Joystick
+
+#
+# Who is labelling the data
+#  (list value)
+#scorers = Mackenzie
+
+#
+# Set this true if the data was sequentially labeled and if there is one file
+# per
+#         folder (you can set the name of this file).  Otherwise there should
+# be
+#         individual files per bodypart, i.e. in our demo case hand.csv,
+#         Finger1.csv etc.  If true then those files will be generated from
+#         Results.txt
+#  (boolean value)
+#multibodypartsfile = false
+
+#
+# File name to use when multibodypartsfile=True
+#  (string value)
+#multibodypartsfilename = Results.csv
+
+#
+# When importing the images and the labels in the csv/xls files should be in
+# the
+#         same order!  During labeling in Fiji one can thus (for occluded body
+#         parts) click in the origin of the image i.e. top left corner (close
+# to
+#         0,0)) these 'false' labels will then be removed. To do so set the
+#         following variable: set this to 0 if no labels should be removed!" If
+#         labels are closer to origin than this number they are set to NaN.
+#         Please adjust to your situation." Units in pixel.
+#  (integer value)
+#invisibleboundary = 10
+
+#
+# Image type of extracted frames (do not change if you used our step1). If you
+#         started from already extracted frames in a different format then
+# change
+#         the format here (for step2 to 4).
+#  (string value)
+#imagetype = .png
+
+
+[evaluation]
+
+#
+# From deeplabcut
+#
+
+#
+# To evaluate the last model that was trained most set this to: -1, to evaluate
+#         all models (training stages) set this to: 'all'  (as string!)
+#  (string value)
+#snapshotindex = -1
+
+#
+# If true will plot train & test images including DeepLabCut labels next to
+# human
+#         labels. Note that this will be plotted for all snapshots as indicated
+#         by snapshotindex
+#  (boolean value)
+#plotting = true
+
+#
+# likelihood. RMSE will be reported for all pairs and pairs with larger
+#         likelihood than pcutoff (see paper). This cutoff will also be used in
+#         plots.
+#  (floating point value)
+#pcutoff = 0.1
+
+
+[label]
+
+#
+# From deeplabcut
+#
+
+#
+# Set color map (e.g. viridis, cool, hsv)
+#  (string value)
+#colormap = cool
+
+#
+# Set scaling for plotting
+#  (floating point value)
+#scale = 1
+
+#
+# Label size
+#  (integer value)
+#label_size = 10
+
+#
+# Label transparency
+#  (floating point value)
+#alpha = 0.6
+
+#
+# Who has labelled the data
+#  (string value)
+#scorer = Mackenzie
+
+
+[net]
+
+#
+# From deeplabcut
+#
+
+# (string value)
+#date = Jan30
+
+#
+# Ids for shuffles, i.e. range(5) for 5 shuffles
+#  (list value)
+#shuffles = 1
+
+#
+# Fraction of labeled images used for training
+#  (list value)
+#training_fraction = 0.95
+
+#
+# Which resnet to use
+#  (string value)
+#resnet = 50
