@@ -20,6 +20,7 @@ Note: run python3 AnalyzeVideos.py first.
 ####################################################
 import os.path
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import imageio
 from skimage.util import img_as_ubyte
@@ -38,7 +39,6 @@ from deeplabcut import utils
 
 CONF = myconfig.CONF
 
-matplotlib.use('Agg')
 imageio.plugins.ffmpeg.download()
 
 

@@ -12,6 +12,7 @@ import math
 
 import imageio
 import matplotlib
+matplotlib.use('Agg')
 from moviepy.editor import VideoFileClip
 from skimage import io
 from skimage.util import img_as_ubyte
@@ -24,7 +25,6 @@ from deeplabcut import utils
 CONF = myconfig.CONF
 
 imageio.plugins.ffmpeg.download()
-matplotlib.use('Agg')
 
 
 def select_random_frames(task=CONF.task):

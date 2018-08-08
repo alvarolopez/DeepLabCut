@@ -20,6 +20,7 @@ import os
 
 from moviepy.editor import VideoFileClip
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -29,7 +30,6 @@ from deeplabcut import myconfig
 from deeplabcut import paths
 from deeplabcut import utils
 
-matplotlib.use('Agg')
 CONF = myconfig.CONF
 
 
