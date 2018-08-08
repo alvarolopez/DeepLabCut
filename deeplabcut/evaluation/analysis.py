@@ -36,13 +36,6 @@ CONF = myconfig.CONF
 #    matplotlib.use('Agg')
 #    import matplotlib.pyplot as plt
 #    from skimage import io
-#
-#
-# def get_cmap(n, name=CONF.label.colormap):
-#    '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct
-#    RGB color; the keyword argument name must be a standard mpl colormap
-#    name.'''
-#    return plt.cm.get_cmap(name, n)
 
 
 # FIXME(aloga): this has to be adjusted with commented code at the bottom
@@ -139,7 +132,7 @@ def main():
     comparisonbodyparts = list(np.unique(Data.columns.get_level_values(1)))
     # FIXME(aloga): This goes with commented code at the bottom
 #    if CONF.evaluation.plotting:
-#        colors = get_cmap(len(comparisonbodyparts))
+#        colors = utils.get_cmap(len(comparisonbodyparts))
 
     results_dir = paths.get_results_dir()
     for trainFraction in CONF.net.training_fraction:

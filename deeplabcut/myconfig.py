@@ -164,7 +164,7 @@ CONF.register_opts(labelling_opts, group="labelling")
 label_opts = [
     cfg.StrOpt(
         "label",
-        default="+",
+        default=".",
         help="""
 Matplotlib label to use (e.g. ".", "+", "*") for the labelling (plotting) of
         the images.

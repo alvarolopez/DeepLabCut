@@ -10,6 +10,10 @@ import os
 import os.path
 import pickle
 import pandas as pd
+import matplotlib.pyplot as plt
+
+from deeplabcut import myconfig
+CONF = myconfig.CONF
 
 
 def attempttomakefolder(foldername):
@@ -36,3 +40,14 @@ def get_immediate_subdirectories(a_dir):
         name for name in os.listdir(a_dir)
         if os.path.isdir(os.path.join(a_dir, name))
     ]
+
+
+def get_cmap(n, name=None):
+    '''
+    Returns a function that maps each index in 0, 1, ..., n-1 to a distinct
+    RGB color; the keyword argument name must be a standard mpl colormap
+    name.
+    '''
+    if name is None:
+        name = CONF.label.colormap
+    return plt.cm.get_cmap(name, n)

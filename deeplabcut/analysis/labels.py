@@ -34,6 +34,7 @@ import tempfile
 
 from deeplabcut import myconfig
 from deeplabcut import paths
+from deeplabcut import utils
 
 CONF = myconfig.CONF
 
@@ -41,20 +42,11 @@ matplotlib.use('Agg')
 imageio.plugins.ffmpeg.download()
 
 
-def get_cmap(n, name=CONF.label.colormap):
-    '''
-    Returns a function that maps each index in 0, 1, ..., n-1 to a distinct
-    RGB color; the keyword argument name must be a standard mpl colormap
-    name.
-    '''
-    return plt.cm.get_cmap(name, n)
-
-
 def CreateVideo(clip, Dataframe, outdir, tmpfolder, vname):
     '''Creating individual frames with labeled body parts and making a video'''
     scorer = np.unique(Dataframe.columns.get_level_values(0))[0]
     bodyparts2plot = list(np.unique(Dataframe.columns.get_level_values(1)))
-    colors = get_cmap(len(bodyparts2plot))
+    colors = utils.get_cmap(len(bodyparts2plot))
 
     ny, nx = clip.size  # dimensions of frame (height, width)
     fps = clip.fps
