@@ -69,11 +69,11 @@ def select_random_frames(task=CONF.task):
     # x2,y2 is the lower right corner of the croped region.
     #
     # All coordinates are in pixels. Float numbers are accepted.
-    if CONF.data.cropping:
-        clip = clip.crop(y1=CONF.data.y1,
-                         y2=CONF.data.y2,
-                         x1=CONF.data.x1,
-                         x2=CONF.data.x2)
+    if CONF.video.cropping:
+        clip = clip.crop(y1=CONF.video.y1,
+                         y2=CONF.video.y2,
+                         x1=CONF.video.x1,
+                         x2=CONF.video.x2)
 
     image = clip.get_frame(1.2)
     imgname = os.path.join(frame_folder, "IsCroppingOK.png")
