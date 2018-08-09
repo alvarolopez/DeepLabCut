@@ -50,22 +50,22 @@ def convert_labels_to_data_frame():
     # Based on an idea by @sneakers-the-rat
     ###################################################
 
-    # FIXME(aloga): check this
-#    if CONF.labelling.multibodypartsfile==True:
-#        folders = [name for name in os.listdir(frame_folder)
-#                   if os.path.isdir(os.path.join(basefolder, name))]
-#        for folder in folders:
-#            # load csv, iterate over nth value in a grouping by frame, save to
-#            bodyparts files
-#            dframe = pd.read_csv(os.path.join(
-#                   basefolder,afolder,CONF.labelling.multibodypartsfilename))
-# Note: the order of bodyparts list in myconfig and labels must be identical!
-#            frame_grouped = dframe.groupby('Slice')
-#            for i, bodypart in enumerate(bodyparts):
-#                part_df = frame_grouped.nth(i)
-#                part_fn =  part_fn = os.path.join(basefolder,
-#                                                  folder, bodypart+'.csv')
-#                part_df.to_csv(part_fn)
+    if CONF.labelling.multibodypartsfile == True:
+        folders = paths.get_video_datasets()
+        for folder in folders:
+            # load csv, iterate over nth value in a grouping by frame, save to
+            # bodyparts files
+            dframe = pd.read_csv(
+                os.path.join(label_folder, folder,
+                             CONF.labelling.multibodypartsfilename))
+            # Note: the order of bodyparts list in myconfig and labels must be
+            # identical!
+            frame_grouped = dframe.groupby('Slice')
+            for i, bodypart in enumerate(CONF.labelling.bodyparts):
+                part_df = frame_grouped.nth(i)
+                part_fn =  part_fn = os.path.join(label_folder,
+                                                  folder, bodypart + '.csv')
+                part_df.to_csv(part_fn)
 
     ###################################################
     # Code if each bodypart has its own label file!
